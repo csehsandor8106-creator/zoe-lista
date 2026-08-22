@@ -1,5 +1,5 @@
-const CACHE='zoe-lista-v13';
-const ASSETS=['./','./index.html','./styles.css','./catalog-data.js','./catalog-patches.js','./input-normalizer.js','./app.js','./unit-price-fixer.js','./update-manager.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
+const CACHE='zoe-lista-v14';
+const ASSETS=['./','./index.html','./styles.css','./catalog-data.js','./catalog-patches.js','./input-normalizer.js','./app.js','./unit-price-fixer.js','./price-policy.js','./update-manager.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(
