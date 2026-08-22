@@ -164,6 +164,18 @@
   gap:7px;
   flex-wrap:wrap;
 }
+.barcode-source-note{
+  padding-top:2px;
+  text-align:center;
+  color:var(--muted);
+  font-size:.58rem;
+  line-height:1.3;
+}
+.barcode-source-note a{
+  color:inherit;
+  text-decoration:underline;
+  text-underline-offset:2px;
+}
 
 body.ui-compact .barcode-scan-btn{
   width:42px;
@@ -182,6 +194,7 @@ body.ui-compact .barcode-scan-btn{
   .barcode-guide{width:86%;height:30%}
   .barcode-teach-actions{display:grid;grid-template-columns:1fr 1.6fr}
   .barcode-teach-actions .add-btn{padding:0 9px;font-size:.78rem}
+  .barcode-source-note{font-size:.55rem}
 }
 
 @media(prefers-reduced-motion:reduce){
