@@ -1,4 +1,4 @@
-const CACHE='zoe-lista-v20';
+const CACHE='zoe-lista-v21';
 const ASSETS=['./','./index.html','./styles.css','./catalog-data.js','./market-catalog-2026.js','./family-catalog-2026.js','./family-grains-2026.js','./family-cleaning-2026.js','./catalog-patches.js','./input-normalizer.js','./app.js','./unit-price-fixer.js','./price-policy.js','./update-manager.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{
