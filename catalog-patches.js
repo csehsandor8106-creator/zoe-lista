@@ -4,7 +4,7 @@
   // Zoé Lista – tesztelés közben kifogott, kurált katalógus-kiegészítések.
   // Csak a beépített katalógus szabályait írhatják felül; a felhasználó saját tanításait nem.
   const LEARNED_KEY = 'zoe-lista-learned-v1';
-  const PATCH_VERSION = 2;
+  const PATCH_VERSION = 3;
 
   const PATCHES = [
     {
@@ -26,7 +26,7 @@
     {
       aliases:['zokni','cs zokni','csomag zokni','1 cs zokni','1 csomag zokni'],
       label:'Zokni',
-      category:'Egyéb',
+      category:'Ruházat',
       icon:'🧦',
       price:1499,
       unit:'csomag'
@@ -38,6 +38,30 @@
       icon:'🌽',
       price:299,
       unit:'db'
+    },
+    {
+      aliases:['fogpiszkáló','fogpiszkalo','fogniszkáló','fogniszkalo','fog piszkáló','fog piszkalo','toothpick'],
+      label:'Fogpiszkáló',
+      category:'Háztartás',
+      icon:'🦷',
+      price:399,
+      unit:'csomag'
+    },
+    {
+      aliases:['póló','polo','basic póló','basic polo','póló basic','polo basic','póló (basic)','polo (basic)','trikó','triko'],
+      label:'Basic póló',
+      category:'Ruházat',
+      icon:'👕',
+      price:2499,
+      unit:'db'
+    },
+    {
+      aliases:['gatya','alsónadrág','alsónadrag','alsó nadrág','also nadrag','boxer','boxeralsó','boxeralso','boxeralsó csomag'],
+      label:'Alsónadrág',
+      category:'Ruházat',
+      icon:'🩲',
+      price:2999,
+      unit:'csomag'
     }
   ];
 
