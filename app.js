@@ -44,6 +44,7 @@
     product(['sertéskaraj','karaj'],'Sertéskaraj','Hús és felvágott','🥩',2299,'kg'),
     product(['tarja'],'Sertéstarja','Hús és felvágott','🥩',2499,'kg'),
     product(['darált hús','darált hús sertés'],'Darált hús','Hús és felvágott','🥩',2999,'kg'),
+    product(['csirke','egész csirke','egesz csirke'],'Egész csirke','Hús és felvágott','🍗',1399,'kg'),
     product(['csirkemell','csirkemellfilé'],'Csirkemellfilé','Hús és felvágott','🍗',1999,'kg'),
     product(['csirkecomb'],'Csirkecomb','Hús és felvágott','🍗',999,'kg'),
     product(['pulykamell'],'Pulykamell','Hús és felvágott','🍗',2599,'kg'),
@@ -86,7 +87,7 @@
     product(['kiwi'],'Kiwi','Zöldség-gyümölcs','🥝',1399,'kg'),
     product(['ananász'],'Ananász','Zöldség-gyümölcs','🍍',999),
     product(['mangó'],'Mangó','Zöldség-gyümölcs','🥭',799),
-    product(['avokádó'],'Avokádó','Zöldség-gyümölcs','🥑',499),
+    product(['avokádó','avocado','avokado'],'Avokádó','Zöldség-gyümölcs','🥑',399),
 
     product(['tej'],'Tej','Tejtermék és tojás','🥛',329),
     product(['sajt','trappista'],'Sajt','Tejtermék és tojás','🧀',2899,'kg'),
@@ -172,6 +173,7 @@
     product(['gin'],'Gin','Szeszes italok','🍸',4999,'üveg'),
     product(['likőr','likor'],'Likőr','Szeszes italok','🥃',3999,'üveg'),
 
+    product(['hasábburgonya','hasabburgonya','hasáb burgonya','hasab burgonya','sült krumpli','sult krumpli','sültkrumpli','sultkrumpli','fagyasztott hasábburgonya'],'Hasábburgonya','Fagyasztott','🍟',1199,'csomag'),
     product(['fagyasztott pizza'],'Fagyasztott pizza','Fagyasztott','🍕',1499),
     product(['jégkrém','fagyi','fagylalt'],'Jégkrém / fagylalt','Fagyasztott','🍦',799),
     product(['mirelite','iglo','frosta'],'Fagyasztott étel','Fagyasztott','❄️',1299,'db','brand'),
@@ -344,8 +346,10 @@
   function fallback(name) {
     if (hasAny(name,['ceruzaelem','ceruza elem','aa','aaa','aa elem','aaa elem','alkáli elem','alkali elem'])) return {category:'Háztartás',icon:'🔋',price:1499,unit:'csomag'};
     if (hasAny(name,['faszén','faszen','grillfaszén','grill faszén','brikett','grillbrikett','grill brikett'])) return {category:'Háztartás',icon:'🔥',price:2499,unit:'csomag'};
-    if (hasAny(name,['marha','marhahús','sertés','sertéshús','disznó','disznóhús','csirke','pulyka','hús','sonka','szalámi','virsli','kolbász','bacon','karaj','tarja'])) return {category:'Hús és felvágott',icon:'🥩',price:2999,unit:'kg'};
+    if (hasAny(name,['csirke','egész csirke','egesz csirke'])) return {category:'Hús és felvágott',icon:'🍗',price:1399,unit:'kg'};
+    if (hasAny(name,['marha','marhahús','sertés','sertéshús','disznó','disznóhús','pulyka','hús','sonka','szalámi','virsli','kolbász','bacon','karaj','tarja'])) return {category:'Hús és felvágott',icon:'🥩',price:2999,unit:'kg'};
     if (hasAny(name,['hal','halfilé','lazac','tonhal','garnéla','rák'])) return {category:'Hal és tenger gyümölcsei',icon:'🐟',price:3499,unit:'kg'};
+    if (hasAny(name,['avokádó','avocado','avokado'])) return {category:'Zöldség-gyümölcs',icon:'🥑',price:399,unit:'db'};
     if (hasAny(name,['alma','banán','répa','paradicsom','paprika','hagyma','uborka','burgonya','krumpli','dinnye','saláta','gomba','brokkoli','gyümölcs','zöldség'])) return {category:'Zöldség-gyümölcs',icon:'🥕',price:799,unit:'kg'};
     if (hasAny(name,['tej','sajt','vaj','joghurt','tejföl','túró','tojás','kefir'])) return {category:'Tejtermék és tojás',icon:'🥛',price:699,unit:'db'};
     if (hasAny(name,['kenyér','zsemle','kifli','bagett','croissant'])) return {category:'Pékáru',icon:'🥖',price:599,unit:'db'};
@@ -356,6 +360,7 @@
     if (hasAny(name,['sör'])) return {category:'Szeszes italok',icon:'🍺',price:399,unit:'db'};
     if (hasAny(name,['bor'])) return {category:'Szeszes italok',icon:'🍷',price:1799,unit:'üveg'};
     if (hasAny(name,['gyümölcslé','narancslé','almalé','üdítő','cola','kóla','energiaital','ásványvíz'])) return {category:'Italok',icon:'🥤',price:699,unit:'db'};
+    if (hasAny(name,['hasábburgonya','hasabburgonya','hasáb burgonya','hasab burgonya','sült krumpli','sult krumpli','sültkrumpli','sultkrumpli'])) return {category:'Fagyasztott',icon:'🍟',price:1199,unit:'csomag'};
     if (hasAny(name,['mosogatószer','mosószer','öblítő','papírtörlő','toalettpapír','wc papír','szemeteszsák','gyufa','öngyújtó'])) return {category:'Háztartás',icon:'🧽',price:1299,unit:'db'};
     if (hasAny(name,['sampon','tusfürdő','fogkrém','fogkefe','dezodor','szappan','borotva'])) return {category:'Higiénia',icon:'🧴',price:1099,unit:'db'};
     if (hasAny(name,['macska','kutya','eledel','alom','macskaeledel','kutyaeledel'])) return {category:'Állateledel',icon:'🐾',price:1499,unit:'db'};
