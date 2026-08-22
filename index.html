@@ -57,7 +57,7 @@
       <label>Kategória<select id="editCategory"></select></label>
       <label>Ikon<input id="editIcon" maxlength="4" /></label>
       <label>Egység<select id="editUnit"><option>db</option><option>kg</option><option>l</option><option>csomag</option><option>doboz</option><option>üveg</option></select></label>
-      <label>Egységár (Ft)<input id="editPrice" type="number" min="0" step="1" inputmode="numeric" /></label>
+      <label>Egységár (Ft)<input id="editPrice" type="number" min="0" step="1" inputmode="numeric" placeholder="Ár megadása" /></label>
       <label class="remember-row"><input id="learnRule" type="checkbox" checked /> Ezt a felismerést jegyezze meg</label>
       <div class="dialog-actions">
         <button id="cancelEditBtn" class="soft-btn" type="button">Mégse</button>
@@ -71,6 +71,7 @@
   <script src="input-normalizer.js" defer></script>
   <script src="app.js" defer></script>
   <script src="unit-price-fixer.js" defer></script>
+  <script src="price-policy.js" defer></script>
   <script src="update-manager.js" defer></script>
 </body>
 </html>
