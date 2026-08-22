@@ -1,56 +1,72 @@
 /* Zoé Lista – UI polish: kompakt kártyák, kényelmes checkbox, halkabb műveletek, stabil mobil görgetés. */
 
-/* A kártyák maradjanak jól tapinthatók, de kevesebb függőleges helyet kérjenek. */
+/* Tömörebb, egységesebb termékkártyák: több tétel férjen el egyszerre. */
 .item{
-  padding:5px 7px;
-  gap:5px;
-  border-radius:11px;
+  padding:4px 6px;
+  gap:4px;
+  border-radius:10px;
+  min-height:70px;
 }
 .product-icon{
-  width:31px;
-  height:31px;
+  width:29px;
+  height:29px;
   border-radius:8px;
-  font-size:1.03rem;
+  font-size:.98rem;
+}
+.item-main{
+  min-width:0;
 }
 .item-name{
-  font-size:.9rem;
-  line-height:1.05;
+  font-size:.86rem;
+  line-height:1.02;
+  margin:0;
 }
 .chips{
-  margin-top:2px;
-  gap:3px;
+  margin-top:1px;
+  gap:2px;
+  align-items:center;
 }
 .pill{
-  padding:2px 5px;
-  font-size:.6rem;
+  padding:1px 5px;
+  font-size:.56rem;
+  line-height:1.25;
+}
+.pill.estimate,
+.pill.user{
+  white-space:nowrap;
 }
 .qty{
   border-radius:8px;
 }
 .qty button{
-  width:25px;
-  height:25px;
-  font-size:.96rem;
+  width:23px;
+  height:23px;
+  font-size:.92rem;
 }
 .qty span{
-  min-width:28px;
-  font-size:.75rem;
+  min-width:26px;
+  font-size:.71rem;
 }
 .unit{
-  font-size:.66rem;
+  font-size:.63rem;
+  line-height:1;
 }
 .price-line{
   display:flex;
   align-items:baseline;
-  flex-wrap:wrap;
+  flex-wrap:nowrap;
   gap:3px;
-  margin-top:2px;
-  font-size:.88rem;
-  line-height:1.05;
+  margin-top:1px;
+  font-size:.81rem;
+  line-height:1;
   font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.price-line > *{
+  min-width:0;
 }
 
-/* Bevásárlás közben a checkbox a legfontosabb érintési cél. */
+/* Bevásárlás közben a checkbox maradjon kényelmes érintési cél. */
 .check{
   width:25px;
   height:25px;
@@ -58,10 +74,10 @@
   cursor:pointer;
 }
 
-/* A szerkesztés/törlés legyen jelen, de ne kiabáljon. */
+/* A szerkesztés/törlés legyen jelen, de vizuálisan másodlagos. */
 .actions{
   gap:0;
-  opacity:.58;
+  opacity:.55;
   transition:opacity .15s ease;
 }
 .item:focus-within .actions,
@@ -69,24 +85,23 @@
   opacity:.9;
 }
 .mini-btn{
-  width:26px;
-  height:26px;
+  width:24px;
+  height:24px;
   padding:0;
-  font-size:.8rem;
+  font-size:.75rem;
 }
 
-/* Kicsit sűrűbb családcsoportok. */
-.list-root{gap:8px}
-.category-block{gap:3px}
-.items{gap:3px}
+/* Sűrűbb családcsoportok. */
+.list-root{gap:7px}
+.category-block{gap:2px}
+.items{gap:2px}
 .category-head{
-  min-height:27px;
-  padding:3px 7px;
-  border-radius:9px;
+  min-height:25px;
+  padding:2px 6px;
+  border-radius:8px;
 }
 
-/* Mobil görgetés: a lista teljes felülete egyértelműen függőleges pan-zóna.
-   Így akkor is simán lehet húzni, ha az ujj egy kártyán, ikonon vagy gomb közelében indul. */
+/* Mobil görgetés: a lista teljes felülete egyértelműen függőleges pan-zóna. */
 .list-root,
 .category-block,
 .items,
@@ -108,9 +123,7 @@
   overflow-anchor:none;
 }
 
-/* A felső bevitel normál állapotból görgetés után vékony gyorsbevitellé zsugorodik.
-   A méretváltást szándékosan nem animáljuk: mobilon a sticky elem animált
-   magasságváltozása könnyen scroll-jankot okoz. */
+/* Stabil kompakt gyorsbevitel. */
 .composer{
   transition:background-color .12s ease,box-shadow .12s ease;
 }
@@ -124,7 +137,6 @@ body.ui-compact .composer{
   padding:4px 0 6px;
   background:color-mix(in srgb,var(--bg) 98%,var(--card));
   box-shadow:0 7px 14px color-mix(in srgb,#000 10%,transparent);
-  /* backdrop-filter szándékosan nincs: sticky elemen Androidon drága lehet. */
 }
 body.ui-compact .composer form{gap:5px}
 body.ui-compact .composer input{
@@ -143,7 +155,7 @@ body.ui-compact .quick-help{
   display:none;
 }
 
-/* A fix összesítő is legyen picit kevésbé testes. */
+/* A fix összesítő is maradjon visszafogott. */
 .summary{
   padding:8px 11px;
   border-radius:15px;
@@ -153,15 +165,17 @@ body.ui-compact .quick-help{
 
 @media(max-width:520px){
   .app-shell{padding-left:8px;padding-right:8px;padding-bottom:94px}
-  .item{padding:5px 6px;gap:4px}
-  .product-icon{width:30px;height:30px;font-size:1rem}
-  .item-name{font-size:.88rem}
+  .item{padding:4px 5px;gap:3px;min-height:68px}
+  .product-icon{width:28px;height:28px;font-size:.95rem}
+  .item-name{font-size:.84rem}
   .check{width:25px;height:25px}
-  .qty button{width:24px;height:24px}
-  .qty span{min-width:27px;font-size:.73rem}
-  .price-line{font-size:.85rem}
-  .mini-btn{width:25px;height:25px}
-  .category-head{min-height:26px;padding:3px 6px}
+  .qty button{width:22px;height:22px}
+  .qty span{min-width:25px;font-size:.7rem}
+  .unit{font-size:.61rem}
+  .pill{font-size:.54rem;padding:1px 4px}
+  .price-line{font-size:.79rem}
+  .mini-btn{width:23px;height:23px}
+  .category-head{min-height:24px;padding:2px 5px}
 }
 
 @media(prefers-reduced-motion:reduce){
