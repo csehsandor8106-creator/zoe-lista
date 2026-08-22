@@ -1,10 +1,26 @@
 (() => {
   'use strict';
 
-  // Zoé Lista – kamerás EAN/UPC vonalkódolvasó, helyi tanulómemóriával.
-  // Külső adatbázis nélkül működik: az ismeretlen kódot a felhasználó egyszer megtanítja,
-  // utána ugyanaz a vonalkód egy koppintás nélkül hozzáadható a meglévő lista-motoron át.
+  // Zoé Lista – kamerás EAN/UPC vonalkódolvasó.
+  // Felismerési sorrend:
+  // 1) helyi Zoé vonalkód-memória
+  // 2) Open Food Facts + testvéradatbázisok (product_type=all)
+  // 3) kézi tanítás, ha egyik sem találja
   const MEMORY_KEY = 'zoe-lista-barcode-memory-v1';
+  const OPEN_FACTS_API = 'https://world.openfoodfacts.org/api/v3/product/';
+  const OPEN_FACTS_FIELDS = [
+    'code','product_type','product_name','product_name_hu','abbreviated_product_name',
+    'abbreviated_product_name_hu','generic_name','generic_name_hu','brands','quantity',
+    'product_quantity','product_quantity_unit','categories','categories_tags'
+  ].join(',');
+  const LOOKUP_TIMEOUT_MS = 7000;
+  const SOURCE_LABELS = {
+    food:'Open Food Facts',
+    beauty:'Open Beauty Facts',
+    petfood:'Open Pet Food Facts',
+    product:'Open Products Facts'
+  };
+
   const form = document.getElementById('addForm');
   const input = document.getElementById('itemInput');
   const addButton = form?.querySelector('.add-btn');
@@ -19,6 +35,9 @@
   }
   function cleanCode(value) {
     return String(value || '').replace(/\s+/g, '').trim();
+  }
+  function cleanText(value) {
+    return String(value || '').replace(/\s+/g, ' ').trim();
   }
   function validGtin(value) {
     const code = String(value || '');
@@ -36,6 +55,33 @@
   function moneyInput(value) {
     const n = Number(String(value || '').replace(/\s/g, '').replace(',', '.'));
     return Number.isFinite(n) && n > 0 ? Math.round(n) : null;
+  }
+  function firstText(...values) {
+    for (const value of values) {
+      const text = cleanText(value);
+      if (text) return text;
+    }
+    return '';
+  }
+  function productLabel(product) {
+    const name = firstText(
+      product?.product_name_hu,
+      product?.product_name,
+      product?.abbreviated_product_name_hu,
+      product?.abbreviated_product_name,
+      product?.generic_name_hu,
+      product?.generic_name
+    );
+    const brands = firstText(product?.brands);
+    const brand = brands.split(',')[0]?.trim() || '';
+    if (!name) return brand;
+    if (!brand) return name;
+    const lowerName = name.toLocaleLowerCase('hu-HU');
+    const lowerBrand = brand.toLocaleLowerCase('hu-HU');
+    return lowerName.includes(lowerBrand) ? name : `${brand} ${name}`;
+  }
+  function sourceLabel(productType) {
+    return SOURCE_LABELS[productType] || 'Open Food Facts';
   }
 
   const scanButton = document.createElement('button');
@@ -92,6 +138,11 @@
           <button class="add-btn" type="submit">Megjegyzés + hozzáadás</button>
         </div>
       </form>
+
+      <div class="barcode-source-note">
+        Automatikus termékadatok: <a href="https://world.openfoodfacts.org/" target="_blank" rel="noopener noreferrer">Open Food Facts</a>
+        és testvéradatbázisai · ODbL
+      </div>
     </section>`;
   document.body.appendChild(dialog);
 
@@ -114,10 +165,18 @@
   let pendingCode = '';
   let candidate = '';
   let candidateHits = 0;
+  let lookupController = null;
 
   function setStatus(text, state = '') {
     status.textContent = text;
     status.dataset.state = state;
+  }
+
+  function cancelLookup() {
+    if (lookupController) {
+      try { lookupController.abort(); } catch {}
+      lookupController = null;
+    }
   }
 
   function stopCamera() {
@@ -150,10 +209,12 @@
     return memory[code] || null;
   }
 
-  function rememberBarcode(code, name) {
+  function rememberBarcode(code, name, meta = {}) {
     const memory = loadMemory();
     const prev = memory[code] || {};
     memory[code] = {
+      ...prev,
+      ...meta,
       name,
       learnedAt:prev.learnedAt || Date.now(),
       lastUsed:Date.now(),
@@ -172,25 +233,79 @@
     saveMemory(memory);
   }
 
-  function showTeach(code) {
+  function showTeach(code, message = 'Ezt a kódot még nem ismerem. Tanítsd meg egyszer. 🙂', suggestedName = '') {
     stopCamera();
+    cancelLookup();
     pendingCode = code;
     currentCode.textContent = code;
     teachForm.hidden = false;
     manualForm.hidden = true;
-    setStatus('Ezt a kódot még nem ismerem. Tanítsd meg egyszer. 🙂', 'unknown');
-    productName.value = '';
+    setStatus(message, 'unknown');
+    productName.value = suggestedName;
     productPrice.value = '';
     setTimeout(() => productName.focus({preventScroll:true}), 30);
   }
 
-  function acceptCode(rawValue, format = '') {
+  async function lookupOpenFacts(code) {
+    cancelLookup();
+    const controller = new AbortController();
+    lookupController = controller;
+    const timeout = setTimeout(() => controller.abort(), LOOKUP_TIMEOUT_MS);
+    const params = new URLSearchParams({
+      product_type:'all',
+      cc:'hu',
+      lc:'hu',
+      fields:OPEN_FACTS_FIELDS
+    });
+
+    try {
+      const response = await fetch(`${OPEN_FACTS_API}${encodeURIComponent(code)}?${params.toString()}`, {
+        method:'GET',
+        mode:'cors',
+        cache:'no-store',
+        headers:{Accept:'application/json'},
+        signal:controller.signal
+      });
+
+      if (response.status === 404) return {found:false, reason:'not-found'};
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const json = await response.json();
+      const product = json?.product && typeof json.product === 'object' ? json.product : null;
+      if (!product) return {found:false, reason:'not-found'};
+
+      const label = productLabel(product);
+      if (!label) {
+        return {
+          found:false,
+          reason:'no-name',
+          suggestedName:firstText(product?.brands)
+        };
+      }
+
+      return {
+        found:true,
+        label,
+        productType:cleanText(product?.product_type),
+        brand:firstText(product?.brands),
+        quantity:firstText(product?.quantity),
+        categories:firstText(product?.categories),
+        source:sourceLabel(cleanText(product?.product_type))
+      };
+    } catch (error) {
+      if (error?.name === 'AbortError') return {found:false, reason:'timeout'};
+      return {found:false, reason:'network'};
+    } finally {
+      clearTimeout(timeout);
+      if (lookupController === controller) lookupController = null;
+    }
+  }
+
+  async function acceptCode(rawValue, format = '') {
     const code = cleanCode(rawValue);
     if (!code) return;
 
-    // Az EAN-8/EAN-13/UPC-A kódoknál ellenőrizzük a check digit-et is.
-    // UPC-E más ellenőrzési szabályt igényel, ezért azt a detektorra bízzuk.
-    const gtinFormat = /^(ean_8|ean_13|upc_a)$/i.test(format);
+    const gtinFormat = /^(ean_8|ean_13|upc_a|gtin_14)$/i.test(format);
     if (gtinFormat && !validGtin(code)) {
       setStatus('A kód nem olvasható biztosan – tartsd egy pillanatra stabilabban.', 'warn');
       return;
@@ -200,7 +315,8 @@
     if (entry?.name) {
       stopCamera();
       touchKnown(code, entry);
-      setStatus(`✓ Felismerve: ${entry.name}`, 'success');
+      const from = entry.sourceName ? ` · ${entry.sourceName}` : '';
+      setStatus(`✓ Felismerve: ${entry.name}${from}`, 'success');
       setTimeout(() => {
         if (dialog.open) dialog.close();
         addThroughExistingApp(entry.name);
@@ -208,7 +324,43 @@
       return;
     }
 
-    showTeach(code);
+    stopCamera();
+    pendingCode = code;
+    teachForm.hidden = true;
+    manualForm.hidden = true;
+    setStatus('🔎 Keresem a nyilvános termékadatbázisban…', 'reading');
+
+    const result = await lookupOpenFacts(code);
+    if (!dialog.open || pendingCode !== code) return;
+
+    if (result.found) {
+      rememberBarcode(code, result.label, {
+        source:'openfacts',
+        sourceName:result.source,
+        productType:result.productType,
+        brand:result.brand,
+        quantity:result.quantity,
+        categories:result.categories
+      });
+      pendingCode = '';
+      const qty = result.quantity ? ` · ${result.quantity}` : '';
+      setStatus(`✓ ${result.label}${qty} · ${result.source}`, 'success');
+      setTimeout(() => {
+        if (dialog.open) dialog.close();
+        addThroughExistingApp(result.label);
+      }, 420);
+      return;
+    }
+
+    if (result.reason === 'timeout') {
+      showTeach(code, 'Az online keresés most túl sokáig tartott. Megtaníthatod kézzel, és Zoé megjegyzi.');
+    } else if (result.reason === 'network') {
+      showTeach(code, 'Most nem érem el az online termékadatbázist. Offline is megtaníthatod ezt a kódot.');
+    } else if (result.reason === 'no-name') {
+      showTeach(code, 'A kód szerepel az adatbázisban, de nincs használható terméknév. Egészítsd ki egyszer.', result.suggestedName || '');
+    } else {
+      showTeach(code, 'A nyilvános adatbázisban sincs találat. Tanítsd meg egyszer, és legközelebb már tudni fogom. 🙂');
+    }
   }
 
   async function scanFrame() {
@@ -223,7 +375,6 @@
         const hit = results.find(result => cleanCode(result.rawValue));
         if (hit) {
           const value = cleanCode(hit.rawValue);
-          // Két egymást követő azonos találat kell: kevesebb téves beolvasás mozgó kameránál.
           if (candidate === value) candidateHits += 1;
           else { candidate = value; candidateHits = 1; }
           setStatus(candidateHits >= 2 ? `Kód: ${value}` : 'Vonalkód észlelve… tartsd stabilan.', 'reading');
@@ -254,11 +405,11 @@
   }
 
   async function startCamera() {
+    cancelLookup();
     stopCamera();
     teachForm.hidden = true;
     manualForm.hidden = false;
     pendingCode = '';
-    placeholder.innerHTML = '📷<br><small>Kamera indul…</small>';
     setStatus('Kamera előkészítése…');
 
     detector = await createDetector();
@@ -289,8 +440,8 @@
       scanning = true;
       setStatus('Keresem a vonalkódot…', 'reading');
       scanFrame();
-    } catch (err) {
-      const denied = err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError';
+    } catch (error) {
+      const denied = error?.name === 'NotAllowedError' || error?.name === 'PermissionDeniedError';
       setStatus(denied
         ? 'A kameraengedély nincs megadva. Engedélyezd a kamerát, vagy írd be lent a kódot.'
         : 'Nem sikerült elindítani a kamerát. A kézi kódbevitel továbbra is használható.', 'warn');
@@ -306,8 +457,16 @@
 
   scanButton.addEventListener('click', openScanner);
   closeButton.addEventListener('click', () => dialog.close());
-  dialog.addEventListener('close', stopCamera);
-  dialog.addEventListener('cancel', stopCamera);
+  dialog.addEventListener('close', () => {
+    cancelLookup();
+    stopCamera();
+    pendingCode = '';
+  });
+  dialog.addEventListener('cancel', () => {
+    cancelLookup();
+    stopCamera();
+    pendingCode = '';
+  });
   dialog.addEventListener('click', event => {
     if (event.target === dialog) dialog.close();
   });
@@ -317,8 +476,12 @@
     const code = cleanCode(codeInput.value);
     if (!code) return;
     codeInput.value = '';
-    // Kézi beírásnál nem találgatjuk a formátumot (pl. 8 számjegy UPC-E is lehet).
-    acceptCode(code, 'manual');
+    const format = /^\d{8}$/.test(code) ? 'ean_8'
+      : /^\d{12}$/.test(code) ? 'upc_a'
+      : /^\d{13}$/.test(code) ? 'ean_13'
+      : /^\d{14}$/.test(code) ? 'gtin_14'
+      : 'manual';
+    acceptCode(code, format);
   });
 
   teachForm.addEventListener('submit', event => {
@@ -326,7 +489,7 @@
     const name = productName.value.trim();
     if (!pendingCode || !name) return;
     const price = moneyInput(productPrice.value);
-    rememberBarcode(pendingCode, name);
+    rememberBarcode(pendingCode, name, {source:'user', sourceName:'Saját tanítás'});
     setStatus(`✓ Megjegyeztem: ${name}`, 'success');
     const code = pendingCode;
     pendingCode = '';
@@ -344,6 +507,9 @@
   });
 
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden && dialog.open) stopCamera();
+    if (document.hidden && dialog.open) {
+      cancelLookup();
+      stopCamera();
+    }
   });
 })();
