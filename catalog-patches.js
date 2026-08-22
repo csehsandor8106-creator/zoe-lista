@@ -5,7 +5,7 @@
   // Csak a beépített katalógus szabályait írhatják felül; a felhasználó saját tanításait nem.
   const LEARNED_KEY = 'zoe-lista-learned-v1';
   const STATE_KEY = 'zoe-lista-state-v1';
-  const PATCH_VERSION = 4;
+  const PATCH_VERSION = 5;
 
   const PATCHES = [
     {
@@ -63,6 +63,34 @@
       icon:'🩲',
       price:2999,
       unit:'csomag'
+    },
+    {
+      aliases:['fokhagyma'],
+      label:'Fokhagyma',
+      category:'Zöldség-gyümölcs',
+      icon:'🧄',
+      price:1999,
+      unit:'kg',
+      pricesByUnit:{kg:1999,db:199}
+    },
+    {
+      aliases:['kaliforniai paprika','kaliforniai paprika kg'],
+      label:'Kaliforniai paprika',
+      category:'Zöldség-gyümölcs',
+      icon:'🫑',
+      price:1499,
+      unit:'kg',
+      pricesByUnit:{kg:1499,db:399}
+    },
+    {
+      aliases:['kaliforniai paprika db','kaliforniai paprika darab'],
+      label:'Kaliforniai paprika',
+      category:'Zöldség-gyümölcs',
+      icon:'🫑',
+      price:399,
+      unit:'db',
+      pricesByUnit:{kg:1499,db:399},
+      forceUnit:true
     }
   ];
 
@@ -81,6 +109,8 @@
       icon:patch.icon,
       price:patch.price,
       unit:patch.unit,
+      pricesByUnit:patch.pricesByUnit || null,
+      forceUnit:!!patch.forceUnit,
       kind:'learned',
       builtinCatalog:true,
       catalogPatch:true,
@@ -110,8 +140,10 @@
       if (item.name !== rule.label) { item.name = rule.label; changed = true; }
       if (item.category !== rule.category) { item.category = rule.category; changed = true; }
       if (item.icon !== rule.icon) { item.icon = rule.icon; changed = true; }
-      if (item.price !== rule.price) { item.price = rule.price; changed = true; }
-      if ((oldCategory === 'Egyéb' || !item.unit) && item.unit !== rule.unit) { item.unit = rule.unit; changed = true; }
+      if (rule.forceUnit && item.unit !== rule.unit) { item.unit = rule.unit; changed = true; }
+      else if ((oldCategory === 'Egyéb' || !item.unit) && item.unit !== rule.unit) { item.unit = rule.unit; changed = true; }
+      const targetPrice = rule.pricesByUnit?.[item.unit] ?? rule.price;
+      if (item.price !== targetPrice) { item.price = targetPrice; changed = true; }
     }
     if (changed) localStorage.setItem(STATE_KEY, JSON.stringify(items));
   } catch {}
