@@ -5,7 +5,7 @@
   // Csak a beépített katalógus szabályait írhatják felül; a felhasználó saját tanításait nem.
   const LEARNED_KEY = 'zoe-lista-learned-v1';
   const STATE_KEY = 'zoe-lista-state-v1';
-  const PATCH_VERSION = 6;
+  const PATCH_VERSION = 7;
 
   const PATCHES = [
     {
@@ -115,6 +115,22 @@
       icon:'🥣',
       price:1699,
       unit:'doboz'
+    },
+    {
+      aliases:['savanyúkáposzta','savanyukaposzta','savanyú káposzta','savanyu kaposzta','savanyított káposzta','savanyitott kaposzta'],
+      label:'Savanyúkáposzta',
+      category:'Zöldség-gyümölcs',
+      icon:'🥬',
+      price:699,
+      unit:'csomag'
+    },
+    {
+      aliases:['fánk','fank','donut','doughnut','lekváros fánk','lekvaros fank','csokis fánk','csokis fank'],
+      label:'Fánk',
+      category:'Pékáru',
+      icon:'🍩',
+      price:399,
+      unit:'db'
     }
   ];
 
