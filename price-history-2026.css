@@ -1,39 +1,39 @@
 .price-history-panel{
-  margin:.1rem 0 .7rem;
-  padding:.7rem .8rem;
+  margin:.05rem 0 .45rem;
+  padding:.5rem .6rem;
   border:1px solid color-mix(in srgb,var(--border,#31413e) 74%,transparent);
-  border-radius:14px;
+  border-radius:11px;
   background:color-mix(in srgb,var(--panel,#151d1b) 88%,#2dd4bf 12%);
 }
 .price-history-title{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:.75rem;
-  margin-bottom:.55rem;
-  font-size:.9rem;
+  gap:.55rem;
+  margin-bottom:.35rem;
+  font-size:.82rem;
   font-weight:800;
 }
 .price-history-title small{
-  font-size:.7rem;
+  font-size:.64rem;
   font-weight:600;
   opacity:.65;
 }
 .price-history-stats{
   display:grid;
   grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:.45rem;
+  gap:.3rem;
 }
 .price-history-stats>div{
   min-width:0;
-  padding:.5rem .55rem;
-  border-radius:10px;
+  padding:.35rem .4rem;
+  border-radius:8px;
   background:color-mix(in srgb,var(--panel,#151d1b) 82%,white 3%);
 }
 .price-history-stats span{
   display:block;
-  margin-bottom:.12rem;
-  font-size:.65rem;
+  margin-bottom:.08rem;
+  font-size:.58rem;
   opacity:.62;
 }
 .price-history-stats strong{
@@ -41,14 +41,14 @@
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
-  font-size:.86rem;
+  font-size:.75rem;
 }
 .price-history-recent{
   display:flex;
-  gap:.35rem;
+  gap:.25rem;
   overflow-x:auto;
-  margin-top:.5rem;
-  padding-bottom:.05rem;
+  margin-top:.32rem;
+  padding-bottom:.02rem;
   scrollbar-width:none;
 }
 .price-history-recent::-webkit-scrollbar{display:none}
@@ -56,16 +56,16 @@
   flex:0 0 auto;
   display:flex;
   align-items:baseline;
-  gap:.3rem;
-  padding:.3rem .45rem;
+  gap:.2rem;
+  padding:.22rem .34rem;
   border-radius:999px;
   background:color-mix(in srgb,var(--panel,#151d1b) 84%,#2dd4bf 8%);
-  font-size:.7rem;
+  font-size:.62rem;
 }
-.price-history-recent small{opacity:.58;font-size:.62rem}
+.price-history-recent small{opacity:.58;font-size:.55rem}
 @media(max-width:420px){
-  .price-history-panel{padding:.62rem .68rem}
-  .price-history-stats{gap:.32rem}
-  .price-history-stats>div{padding:.42rem .45rem}
-  .price-history-stats strong{font-size:.78rem}
+  .price-history-panel{padding:.45rem .52rem}
+  .price-history-stats{gap:.25rem}
+  .price-history-stats>div{padding:.3rem .34rem}
+  .price-history-stats strong{font-size:.7rem}
 }
