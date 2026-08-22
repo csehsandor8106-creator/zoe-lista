@@ -1,0 +1,154 @@
+/* Zoé Lista – UI polish: kompakt kártyák, kényelmes checkbox, halkabb műveletek, összecsukódó bevitel. */
+
+/* A kártyák maradjanak jól tapinthatók, de kevesebb függőleges helyet kérjenek. */
+.item{
+  padding:5px 7px;
+  gap:5px;
+  border-radius:11px;
+}
+.product-icon{
+  width:31px;
+  height:31px;
+  border-radius:8px;
+  font-size:1.03rem;
+}
+.item-name{
+  font-size:.9rem;
+  line-height:1.05;
+}
+.chips{
+  margin-top:2px;
+  gap:3px;
+}
+.pill{
+  padding:2px 5px;
+  font-size:.6rem;
+}
+.qty{
+  border-radius:8px;
+}
+.qty button{
+  width:25px;
+  height:25px;
+  font-size:.96rem;
+}
+.qty span{
+  min-width:28px;
+  font-size:.75rem;
+}
+.unit{
+  font-size:.66rem;
+}
+.price-line{
+  display:flex;
+  align-items:baseline;
+  flex-wrap:wrap;
+  gap:3px;
+  margin-top:2px;
+  font-size:.88rem;
+  line-height:1.05;
+  font-variant-numeric:tabular-nums;
+}
+
+/* Bevásárlás közben a checkbox a legfontosabb érintési cél. */
+.check{
+  width:25px;
+  height:25px;
+  margin:0;
+  cursor:pointer;
+}
+
+/* A szerkesztés/törlés legyen jelen, de ne kiabáljon. */
+.actions{
+  gap:0;
+  opacity:.58;
+  transition:opacity .15s ease;
+}
+.item:focus-within .actions,
+.item:hover .actions{
+  opacity:.9;
+}
+.mini-btn{
+  width:26px;
+  height:26px;
+  padding:0;
+  font-size:.8rem;
+}
+
+/* Kicsit sűrűbb családcsoportok. */
+.list-root{gap:8px}
+.category-block{gap:3px}
+.items{gap:3px}
+.category-head{
+  min-height:27px;
+  padding:3px 7px;
+  border-radius:9px;
+}
+
+/* A felső bevitel normál állapotból görgetés után vékony gyorsbevitellé zsugorodik. */
+.composer{
+  transition:padding .18s ease,background-color .18s ease,box-shadow .18s ease;
+}
+.composer form{
+  transition:gap .18s ease;
+}
+.composer input,
+.composer .add-btn{
+  transition:min-height .18s ease,padding .18s ease,border-radius .18s ease,font-size .18s ease;
+}
+.quick-help{
+  overflow:hidden;
+  max-height:32px;
+  opacity:1;
+  transition:max-height .18s ease,opacity .15s ease,margin .18s ease;
+}
+
+body.ui-compact .composer{
+  padding:4px 0 6px;
+  background:color-mix(in srgb,var(--bg) 94%,transparent);
+  box-shadow:0 7px 14px color-mix(in srgb,#000 10%,transparent);
+  backdrop-filter:blur(10px);
+}
+body.ui-compact .composer form{gap:5px}
+body.ui-compact .composer input{
+  min-height:40px;
+  padding:8px 11px;
+  border-radius:12px;
+  font-size:15px;
+}
+body.ui-compact .composer .add-btn{
+  min-height:40px;
+  min-width:44px;
+  padding:0 12px;
+  border-radius:12px;
+}
+body.ui-compact .quick-help{
+  max-height:0;
+  opacity:0;
+  margin:0;
+}
+
+/* A fix összesítő is legyen picit kevésbé testes. */
+.summary{
+  padding:8px 11px;
+  border-radius:15px;
+}
+.summary-small{font-size:.76rem}
+.summary-total{font-size:1.15rem}
+
+@media(max-width:520px){
+  .app-shell{padding-left:8px;padding-right:8px;padding-bottom:94px}
+  .item{padding:5px 6px;gap:4px}
+  .product-icon{width:30px;height:30px;font-size:1rem}
+  .item-name{font-size:.88rem}
+  .check{width:25px;height:25px}
+  .qty button{width:24px;height:24px}
+  .qty span{min-width:27px;font-size:.73rem}
+  .price-line{font-size:.85rem}
+  .mini-btn{width:25px;height:25px}
+  .category-head{min-height:26px;padding:3px 6px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .composer,.composer form,.composer input,.composer .add-btn,.quick-help,.actions{transition:none}
+}
