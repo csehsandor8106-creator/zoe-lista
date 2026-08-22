@@ -1,0 +1,69 @@
+/* Zoé Lista – színesebb, tömörebb, üzleti útvonalhoz igazított listanézet. */
+.list-root{gap:11px}
+.category-block{--family-color:#7d8589;display:grid;gap:5px}
+.category-head{
+  min-height:30px;
+  padding:5px 8px;
+  border:1px solid color-mix(in srgb,var(--family-color) 34%,var(--line));
+  border-left:4px solid var(--family-color);
+  border-radius:10px;
+  background:color-mix(in srgb,var(--family-color) 14%,var(--card));
+  color:var(--text);
+  font-size:.71rem;
+  letter-spacing:.035em;
+}
+.category-title{gap:6px}
+.category-title>span:first-child{font-size:.96rem}
+.items{gap:5px}
+.item{
+  min-height:0;
+  padding:7px 8px;
+  gap:6px;
+  border-radius:12px;
+  border-color:color-mix(in srgb,var(--family-color) 30%,var(--line));
+  background:color-mix(in srgb,var(--family-color) 9%,var(--card));
+  box-shadow:inset 3px 0 0 color-mix(in srgb,var(--family-color) 72%,transparent),0 1px 2px rgba(0,0,0,.04);
+}
+.item.done{opacity:.52}
+.check{width:21px;height:21px}
+.product-icon{
+  width:34px;
+  height:34px;
+  border-radius:9px;
+  font-size:1.12rem;
+  background:color-mix(in srgb,var(--family-color) 15%,var(--panel));
+  border-color:color-mix(in srgb,var(--family-color) 25%,var(--line));
+}
+.item-name{font-size:.94rem;line-height:1.08;font-weight:850}
+.chips{gap:4px;margin-top:4px}
+.item .pill:not(.estimate):not(.user){display:none}
+.pill{padding:2px 6px;font-size:.62rem}
+.qty{border-radius:9px}
+.qty button{width:28px;height:28px;font-size:1rem}
+.qty span{min-width:31px;font-size:.78rem}
+.unit{font-size:.68rem}
+.price-line{margin-top:3px;font-size:.9rem;line-height:1.1}
+.actions{display:flex;flex-direction:column;gap:0}
+.mini-btn{width:29px;height:29px;border-radius:8px;font-size:.88rem}
+.toolbar{margin-bottom:9px}
+.soft-btn{min-height:37px;padding:0 10px;border-radius:11px}
+.summary{padding:10px 13px;border-radius:16px}
+.summary-total{font-size:1.2rem}
+.app-shell{padding-bottom:102px}
+
+@media(max-width:520px){
+  .list-root{gap:9px}
+  .category-block{gap:4px}
+  .category-head{min-height:28px;padding:4px 7px;font-size:.68rem}
+  .items{gap:4px}
+  .item{grid-template-columns:auto auto minmax(0,1fr) auto;gap:5px;padding:6px 7px;border-radius:11px}
+  .check{width:20px;height:20px}
+  .product-icon{width:32px;height:32px;font-size:1.05rem}
+  .item-name{font-size:.91rem}
+  .chips{margin-top:3px;gap:3px}
+  .qty button{width:26px;height:26px}
+  .qty span{min-width:29px;font-size:.75rem}
+  .price-line{font-size:.87rem;margin-top:3px}
+  .mini-btn{width:27px;height:27px}
+  .summary{padding:9px 11px}
+}
