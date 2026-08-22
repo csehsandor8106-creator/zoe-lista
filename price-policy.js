@@ -65,15 +65,15 @@
 
       // Ha egy kiegészített név (pl. „Jégkrém (tescós)”) csak szóhatáros
       // rész-találattal ismert fel, tanuljuk meg a teljes nevet is ugyanahhoz
-      // a szabályhoz. Így az app és az árpolitika a következő körben már
-      // ugyanazt a pontos szabályt használja, nem tudnak pingpongozni.
-      if (!match.exact && ['estimate','estimate-unit','unknown'].includes(item.source)) {
+      // a BEÉPÍTETT katalógusszabályhoz. A felhasználó saját tanításait itt
+      // soha nem származtatjuk vagy írjuk felül.
+      if (!match.exact && rule.builtinCatalog && ['estimate','estimate-unit','unknown'].includes(item.source)) {
         const existing = learned[key];
         if (!existing || existing.builtinCatalog) {
           const derived = {
             ...rule,
             kind: rule.kind || 'learned',
-            builtinCatalog: rule.builtinCatalog !== false,
+            builtinCatalog: true,
             derivedCatalogAlias: true,
             derivedFromAlias: match.alias
           };
@@ -153,7 +153,6 @@
   function decorateUnknownPrices() {
     const items = load(STATE_KEY, []);
     const byId = new Map(items.map(i => [String(i.id), i]));
-    const unknown = items.filter(i => i?.price == null || i?.source === 'unknown');
 
     for (const row of document.querySelectorAll('.item')) {
       const item = byId.get(String(row.dataset.id));
