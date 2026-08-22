@@ -1,0 +1,82 @@
+/* Zoé Lista – gyakran vásárolt termékek gyorsgombjai. */
+.smart-picks{
+  display:grid;
+  gap:6px;
+  margin-top:8px;
+}
+.smart-picks[hidden]{display:none!important}
+.smart-picks-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:0 2px;
+  color:var(--muted);
+  font-size:.69rem;
+  font-weight:800;
+}
+.smart-picks-head small{
+  font-size:.6rem;
+  font-weight:650;
+  opacity:.72;
+}
+.smart-picks-row{
+  display:flex;
+  gap:6px;
+  overflow-x:auto;
+  padding:1px 1px 3px;
+  scrollbar-width:none;
+  overscroll-behavior-inline:contain;
+}
+.smart-picks-row::-webkit-scrollbar{display:none}
+.smart-pick{
+  --pick-color:#7d8589;
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  min-height:34px;
+  max-width:190px;
+  padding:5px 8px;
+  border:1px solid color-mix(in srgb,var(--pick-color) 34%,var(--line));
+  border-left:3px solid var(--pick-color);
+  border-radius:10px;
+  background:color-mix(in srgb,var(--pick-color) 10%,var(--panel));
+  color:var(--text);
+  font:inherit;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.smart-pick:active{transform:translateY(1px)}
+.smart-pick.is-active{
+  background:color-mix(in srgb,var(--pick-color) 16%,var(--panel));
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--pick-color) 18%,transparent);
+}
+.smart-pick-icon{font-size:1rem;line-height:1}
+.smart-pick-label{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:.73rem;
+  font-weight:800;
+}
+.smart-pick-count{
+  margin-left:1px;
+  padding:1px 4px;
+  border-radius:999px;
+  background:color-mix(in srgb,var(--pick-color) 18%,transparent);
+  color:var(--muted);
+  font-size:.56rem;
+  font-weight:800;
+}
+.ui-compact .smart-picks{display:none!important}
+
+@media(max-width:520px){
+  .smart-picks{margin-top:6px;gap:5px}
+  .smart-picks-head{font-size:.66rem}
+  .smart-picks-head small{font-size:.57rem}
+  .smart-picks-row{gap:5px}
+  .smart-pick{min-height:32px;padding:4px 7px;border-radius:9px;max-width:165px}
+  .smart-pick-label{font-size:.7rem}
+  .smart-pick-icon{font-size:.95rem}
+}
