@@ -1,0 +1,164 @@
+/* Zoé Lista – üzletprofil-választó és szerkeszthető bolti útvonal. */
+.store-profile-bar{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  margin:0 0 9px;
+}
+.store-profile-select-wrap{
+  min-width:0;
+  flex:1;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  min-height:38px;
+  padding:0 8px 0 10px;
+  border:1px solid var(--line);
+  border-radius:11px;
+  background:var(--card);
+  color:var(--muted);
+  font-size:.72rem;
+  font-weight:800;
+}
+.store-profile-select-wrap>span{white-space:nowrap}
+.store-profile-select-wrap select{
+  min-width:0;
+  flex:1;
+  height:34px;
+  border:0;
+  outline:0;
+  background:transparent;
+  color:var(--text);
+  font-weight:850;
+  font-size:.78rem;
+}
+.store-route-btn{
+  min-height:38px;
+  border:1px solid var(--line);
+  border-radius:11px;
+  background:var(--card);
+  color:var(--text);
+  padding:0 10px;
+  font-size:.74rem;
+  font-weight:850;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.store-route-dialog{
+  width:min(94vw,520px);
+  max-height:min(88vh,760px);
+}
+.store-route-dialog::backdrop{background:rgba(0,0,0,.62)}
+.store-route-card{
+  max-height:min(88vh,760px);
+  overflow:auto;
+  overscroll-behavior:contain;
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:13px;
+  box-shadow:0 22px 70px rgba(0,0,0,.35);
+}
+.store-route-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+}
+.store-route-head h2{margin:0;font-size:1.06rem}
+.store-route-head p{
+  margin:3px 0 0;
+  color:var(--muted);
+  font-size:.7rem;
+  line-height:1.3;
+}
+.store-route-profile-line{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin:10px 0 7px;
+  padding:7px 8px;
+  border-radius:10px;
+  background:var(--panel);
+}
+.store-route-profile-line strong{font-size:.82rem}
+.store-copy-btn{min-height:32px;font-size:.68rem}
+.store-route-list{
+  display:grid;
+  gap:4px;
+  list-style:none;
+  margin:0;
+  padding:0;
+}
+.store-route-row{
+  display:grid;
+  grid-template-columns:25px minmax(0,1fr) auto;
+  align-items:center;
+  gap:7px;
+  min-height:38px;
+  padding:4px 5px 4px 4px;
+  border:1px solid color-mix(in srgb,var(--route-color) 35%,var(--line));
+  border-left:4px solid var(--route-color);
+  border-radius:9px;
+  background:color-mix(in srgb,var(--route-color) 9%,var(--card));
+}
+.store-route-number{
+  display:grid;
+  place-items:center;
+  width:24px;
+  height:24px;
+  border-radius:7px;
+  background:color-mix(in srgb,var(--route-color) 17%,var(--panel));
+  font-size:.68rem;
+  font-weight:900;
+}
+.store-route-name{
+  min-width:0;
+  font-size:.76rem;
+  font-weight:850;
+}
+.store-route-move{display:flex;gap:3px}
+.store-route-move button{
+  width:31px;
+  height:29px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:var(--panel);
+  color:var(--text);
+  font-weight:900;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.store-route-move button:disabled{opacity:.25;cursor:default}
+.store-route-actions{
+  position:sticky;
+  bottom:-13px;
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  gap:6px;
+  margin:10px -4px -4px;
+  padding:8px 4px 4px;
+  background:linear-gradient(transparent,var(--card) 24%);
+}
+.store-route-actions .soft-btn,
+.store-route-actions .add-btn{min-height:36px;font-size:.7rem}
+
+body.ui-compact .store-profile-bar{
+  margin-top:0;
+}
+
+@media(max-width:520px){
+  .store-profile-bar{gap:5px;margin-bottom:7px}
+  .store-profile-select-wrap{min-height:35px;padding-left:8px}
+  .store-profile-select-wrap>span{font-size:.67rem}
+  .store-profile-select-wrap select{height:31px;font-size:.73rem}
+  .store-route-btn{min-height:35px;padding:0 8px;font-size:.69rem}
+  .store-route-card{padding:10px}
+  .store-route-row{min-height:35px;grid-template-columns:23px minmax(0,1fr) auto}
+  .store-route-number{width:22px;height:22px;font-size:.64rem}
+  .store-route-name{font-size:.72rem}
+  .store-route-move button{width:29px;height:27px}
+  .store-route-actions{bottom:-10px;margin-left:-2px;margin-right:-2px}
+}
