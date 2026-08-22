@@ -1,0 +1,52 @@
+/* Zoé Lista – élő értelmezési előnézet */
+.input-preview{
+  --preview-color:#7d8589;
+  margin:7px 2px 0;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;
+  gap:8px;
+  padding:7px 9px;
+  border:1px solid color-mix(in srgb,var(--preview-color) 38%,var(--line));
+  border-left:4px solid var(--preview-color);
+  border-radius:12px;
+  background:color-mix(in srgb,var(--preview-color) 11%,var(--card));
+  box-shadow:0 1px 2px rgba(0,0,0,.04);
+}
+.input-preview[hidden]{display:none!important}
+.preview-icon{
+  width:32px;
+  height:32px;
+  display:grid;
+  place-items:center;
+  border-radius:9px;
+  background:color-mix(in srgb,var(--preview-color) 17%,var(--panel));
+  border:1px solid color-mix(in srgb,var(--preview-color) 28%,var(--line));
+  font-size:1.06rem;
+}
+.preview-body{min-width:0}
+.preview-topline{display:flex;align-items:baseline;gap:6px;min-width:0;flex-wrap:wrap}
+.preview-topline strong{font-size:.82rem;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.preview-category{font-size:.62rem;color:var(--muted);font-weight:800}
+.preview-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:3px;font-size:.67rem;color:var(--muted)}
+.preview-price{display:inline-flex;align-items:center;border-radius:999px;padding:2px 5px;border:1px solid var(--line);font-weight:800}
+.preview-price.estimate{background:#fff2e9;color:#8a3d11;border-color:#ffd8bf}
+.preview-price.user{background:var(--accent2);color:var(--text);border-color:color-mix(in srgb,var(--accent) 28%,var(--line))}
+.preview-total{font-weight:900;color:var(--text)}
+.preview-status{
+  width:24px;height:24px;display:grid;place-items:center;border-radius:999px;font-size:.72rem;font-weight:950;
+  border:1px solid color-mix(in srgb,var(--preview-color) 40%,var(--line));
+  background:color-mix(in srgb,var(--preview-color) 16%,var(--panel));
+}
+.preview-status.ok{color:var(--preview-color)}
+.preview-status.uncertain{color:var(--muted)}
+.ui-compact .input-preview{display:none!important}
+
+@media(max-width:520px){
+  .input-preview{margin-top:5px;padding:6px 8px;gap:6px;border-radius:10px}
+  .preview-icon{width:29px;height:29px;font-size:1rem}
+  .preview-topline strong{font-size:.79rem}
+  .preview-category{font-size:.59rem}
+  .preview-meta{font-size:.64rem;gap:4px}
+  .preview-status{width:22px;height:22px}
+}
