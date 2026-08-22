@@ -3,7 +3,8 @@
 
   // Zoé Lista – vizuális termékcsaládok + üzleten belüli útvonal szerinti rendezés.
   // A felismerési és árlogikát nem módosítja; csak a már kirajzolt listát rendezi és színezi.
-  const STORE_ROUTE = [
+  const ACTIVE_ROUTE_KEY = 'zoe-lista-active-route-v1';
+  const DEFAULT_ROUTE = [
     'Zöldség-gyümölcs',
     'Pékáru',
     'Hús és felvágott',
@@ -43,12 +44,22 @@
     'Egyéb':'#7d8589'
   };
 
-  const rank = new Map(STORE_ROUTE.map((name, index) => [name, index]));
   const root = document.getElementById('listRoot');
   if (!root) return;
 
+  function activeRoute() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(ACTIVE_ROUTE_KEY));
+      if (Array.isArray(saved) && saved.length) {
+        const unique = saved.filter((name, index, arr) => DEFAULT_ROUTE.includes(name) && arr.indexOf(name) === index);
+        for (const category of DEFAULT_ROUTE) if (!unique.includes(category)) unique.push(category);
+        return unique;
+      }
+    } catch {}
+    return [...DEFAULT_ROUTE];
+  }
+
   function categoryOf(section) {
-    // A termékkártya első pill-je az app eredeti kategória-mezője.
     const categoryPill = section.querySelector('.item .pill:not(.estimate):not(.user)');
     if (categoryPill) return categoryPill.textContent.trim();
 
@@ -68,7 +79,8 @@
 
   function applyLayout() {
     observer.disconnect();
-
+    const route = activeRoute();
+    const rank = new Map(route.map((name, index) => [name, index]));
     const sections = Array.from(root.children).filter(node => node.classList?.contains('category-block'));
 
     for (const section of sections) {
@@ -96,7 +108,6 @@
     });
 
     for (const section of sections) root.appendChild(section);
-
     observer.observe(root, {childList:true, subtree:true});
   }
 
@@ -108,6 +119,17 @@
       applyLayout();
     });
   }
+
+  window.addEventListener('zoe-store-route-change', schedule);
+  window.addEventListener('storage', event => {
+    if (event.key === ACTIVE_ROUTE_KEY) schedule();
+  });
+
+  window.ZoeListLayout = {
+    refresh:schedule,
+    defaultRoute:[...DEFAULT_ROUTE],
+    colors:{...FAMILY_COLORS}
+  };
 
   observer.observe(root, {childList:true, subtree:true});
   applyLayout();
