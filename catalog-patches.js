@@ -5,7 +5,7 @@
   // Csak a beépített katalógus szabályait írhatják felül; a felhasználó saját tanításait nem.
   const LEARNED_KEY = 'zoe-lista-learned-v1';
   const STATE_KEY = 'zoe-lista-state-v1';
-  const PATCH_VERSION = 5;
+  const PATCH_VERSION = 6;
 
   const PATCHES = [
     {
@@ -91,6 +91,30 @@
       unit:'db',
       pricesByUnit:{kg:1499,db:399},
       forceUnit:true
+    },
+    {
+      aliases:['betét','betet','egészségügyi betét','egeszsegugyi betet','intim betét','intim betet','menstruációs betét','menstruacios betet','always betét','always betet','libresse betét','libresse betet','naturella betét','naturella betet'],
+      label:'Egészségügyi betét',
+      category:'Higiénia',
+      icon:'🩸',
+      price:1499,
+      unit:'csomag'
+    },
+    {
+      aliases:['nesquik','nesquick','nesqik','nesquik gabonapehely','nesquick gabonapehely','nesquik cereal'],
+      label:'Nesquik gabonapehely',
+      category:'Alapélelmiszer',
+      icon:'🥣',
+      price:1699,
+      unit:'doboz'
+    },
+    {
+      aliases:['chokapic','chocapic','chokapik','chokapic gabonapehely','chocapic gabonapehely'],
+      label:'Chokapic gabonapehely',
+      category:'Alapélelmiszer',
+      icon:'🥣',
+      price:1699,
+      unit:'doboz'
     }
   ];
 
@@ -133,7 +157,7 @@
     const items = JSON.parse(localStorage.getItem(STATE_KEY)) || [];
     let changed = false;
     for (const item of items) {
-      if (!item || item.source !== 'estimate') continue;
+      if (!item || (item.source !== 'estimate' && item.source !== 'estimate-unit')) continue;
       const rule = patchRules[normalize(item.name)];
       if (!rule) continue;
       const oldCategory = item.category;
