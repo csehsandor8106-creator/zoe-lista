@@ -188,8 +188,9 @@
     const code = cleanCode(rawValue);
     if (!code) return;
 
-    // EAN/UPC esetén ellenőrizzük a check digit-et is, hogy egy félreolvasás ne tanulódjon meg.
-    const gtinFormat = /^(ean_8|ean_13|upc_a|upc_e)$/i.test(format);
+    // Az EAN-8/EAN-13/UPC-A kódoknál ellenőrizzük a check digit-et is.
+    // UPC-E más ellenőrzési szabályt igényel, ezért azt a detektorra bízzuk.
+    const gtinFormat = /^(ean_8|ean_13|upc_a)$/i.test(format);
     if (gtinFormat && !validGtin(code)) {
       setStatus('A kód nem olvasható biztosan – tartsd egy pillanatra stabilabban.', 'warn');
       return;
@@ -211,7 +212,11 @@
   }
 
   async function scanFrame() {
-    if (!scanning || !detector || video.readyState < 2) return;
+    if (!scanning || !detector) return;
+    if (video.readyState < 2) {
+      scanTimer = setTimeout(scanFrame, 100);
+      return;
+    }
     try {
       const results = await detector.detect(video);
       if (results?.length) {
@@ -228,7 +233,7 @@
           }
         }
       }
-    } catch (err) {
+    } catch {
       // Egy-egy képkocka hibája ne állítsa le a kamerát.
     }
     if (scanning) scanTimer = setTimeout(scanFrame, 140);
@@ -253,6 +258,7 @@
     teachForm.hidden = true;
     manualForm.hidden = false;
     pendingCode = '';
+    placeholder.innerHTML = '📷<br><small>Kamera indul…</small>';
     setStatus('Kamera előkészítése…');
 
     detector = await createDetector();
@@ -311,7 +317,8 @@
     const code = cleanCode(codeInput.value);
     if (!code) return;
     codeInput.value = '';
-    acceptCode(code, /^\d{8}$/.test(code) ? 'ean_8' : /^\d{12}$/.test(code) ? 'upc_a' : /^\d{13}$/.test(code) ? 'ean_13' : 'manual');
+    // Kézi beírásnál nem találgatjuk a formátumot (pl. 8 számjegy UPC-E is lehet).
+    acceptCode(code, 'manual');
   });
 
   teachForm.addEventListener('submit', event => {
