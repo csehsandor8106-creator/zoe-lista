@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#0f766e" />
+  <title>Zoé Lista – helyreállítás</title>
+  <style>
+    :root{color-scheme:dark}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#0b1111;color:#f3f7f6;display:grid;place-items:center;min-height:100vh;padding:24px;box-sizing:border-box}.card{max-width:520px;background:#151c1c;border:1px solid #2d3938;border-radius:22px;padding:28px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.3)}h1{margin-top:0}.ok{color:#37d6c5}p{line-height:1.5;color:#c8d0cf}.small{font-size:.9rem;color:#96a3a1}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Zoé Lista helyreállítás</h1>
+    <p id="status">A beragadt frissítési állapot takarítása…</p>
+    <p class="small">A bevásárlólistád és a saját áraiddal tanított adatok megmaradnak.</p>
+  </main>
+  <script>
+  (async()=>{
+    const status=document.getElementById('status');
+    try{
+      if('serviceWorker' in navigator){
+        const regs=await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r=>r.unregister()));
+      }
+      if('caches' in window){
+        const keys=await caches.keys();
+        await Promise.all(keys.filter(k=>k.startsWith('zoe-lista-')).map(k=>caches.delete(k)));
+      }
+      sessionStorage.removeItem('zoe-lista-sw-reload-at');
+      sessionStorage.removeItem('zoe-lista-sw-check-at');
+      status.textContent='Kész. Újraindítom a Zoé Listát…';
+      status.className='ok';
+      setTimeout(()=>location.replace('./?recovered=22'),1200);
+    }catch(err){
+      status.textContent='A helyreállítás részben sikerült. Nyisd meg újra a Zoé Listát.';
+    }
+  })();
+  </script>
+</body>
+</html>
