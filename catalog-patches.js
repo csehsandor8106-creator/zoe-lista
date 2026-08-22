@@ -5,7 +5,7 @@
   // Csak a beépített katalógus szabályait írhatják felül; a felhasználó saját tanításait nem.
   const LEARNED_KEY = 'zoe-lista-learned-v1';
   const STATE_KEY = 'zoe-lista-state-v1';
-  const PATCH_VERSION = 7;
+  const PATCH_VERSION = 8;
 
   const PATCHES = [
     {
@@ -131,7 +131,41 @@
       icon:'🍩',
       price:399,
       unit:'db'
-    }
+    },
+
+    // Gyakori sörmárkák – az egyszerű márkanév is sörként értelmezhető.
+    {aliases:['gösser','gosser','gösser sör','gosser sor'],label:'Gösser sör',category:'Szeszes italok',icon:'🍺',price:449,unit:'db'},
+    {aliases:['holsten','holsten sör','holsten sor'],label:'Holsten sör',category:'Szeszes italok',icon:'🍺',price:399,unit:'db'},
+    {aliases:['soproni','soproni sör','soproni sor'],label:'Soproni sör',category:'Szeszes italok',icon:'🍺',price:399,unit:'db'},
+    {aliases:['dreher','dreher sör','dreher sor'],label:'Dreher sör',category:'Szeszes italok',icon:'🍺',price:429,unit:'db'},
+    {aliases:['borsodi','borsodi sör','borsodi sor'],label:'Borsodi sör',category:'Szeszes italok',icon:'🍺',price:379,unit:'db'},
+    {aliases:['arany ászok','arany aszok','aranyászok','aranyaszok'],label:'Arany Ászok sör',category:'Szeszes italok',icon:'🍺',price:349,unit:'db'},
+    {aliases:['kőbányai','kobanyai','kőbányai sör','kobanyai sor'],label:'Kőbányai sör',category:'Szeszes italok',icon:'🍺',price:349,unit:'db'},
+    {aliases:['heineken','heineken sör','heineken sor'],label:'Heineken sör',category:'Szeszes italok',icon:'🍺',price:549,unit:'db'},
+    {aliases:['stella artois','stella','stella sör','stella sor'],label:'Stella Artois sör',category:'Szeszes italok',icon:'🍺',price:549,unit:'db'},
+    {aliases:["beck's",'becks','becks sör','becks sor'],label:"Beck's sör",category:'Szeszes italok',icon:'🍺',price:499,unit:'db'},
+    {aliases:['carlsberg','carlsberg sör','carlsberg sor'],label:'Carlsberg sör',category:'Szeszes italok',icon:'🍺',price:499,unit:'db'},
+    {aliases:['tuborg','tuborg sör','tuborg sor'],label:'Tuborg sör',category:'Szeszes italok',icon:'🍺',price:449,unit:'db'},
+    {aliases:['kozel','kozel sör','kozel sor'],label:'Kozel sör',category:'Szeszes italok',icon:'🍺',price:449,unit:'db'},
+    {aliases:['staropramen','staropramen sör','staropramen sor'],label:'Staropramen sör',category:'Szeszes italok',icon:'🍺',price:499,unit:'db'},
+    {aliases:['pilsner urquell','pilsner urquell sör','pilsner urquell sor'],label:'Pilsner Urquell sör',category:'Szeszes italok',icon:'🍺',price:599,unit:'db'},
+    {aliases:['corona','corona extra','corona sör','corona sor'],label:'Corona sör',category:'Szeszes italok',icon:'🍺',price:699,unit:'db'},
+    {aliases:['peroni','peroni sör','peroni sor'],label:'Peroni sör',category:'Szeszes italok',icon:'🍺',price:599,unit:'db'},
+    {aliases:['birra moretti','moretti','moretti sör','moretti sor'],label:'Birra Moretti sör',category:'Szeszes italok',icon:'🍺',price:599,unit:'db'},
+    {aliases:['guinness','guinness sör','guinness sor'],label:'Guinness sör',category:'Szeszes italok',icon:'🍺',price:799,unit:'db'},
+
+    // Üveges zöldségek, olívák és gyakori savanyúságok.
+    {
+      aliases:['olívabogyó','olivabogyo','olíva bogyó','oliva bogyo','zöld olívabogyó','zold olivabogyo','fekete olívabogyó','fekete olivabogyo','magozott olívabogyó','magozott olivabogyo','töltött olívabogyó','toltott olivabogyo'],
+      label:'Olívabogyó',category:'Alapélelmiszer',icon:'🫒',price:899,unit:'üveg'
+    },
+    {aliases:['kapribogyó','kapribogyo','kapri bogyó','kapri bogyo','capers'],label:'Kapribogyó',category:'Alapélelmiszer',icon:'🫒',price:799,unit:'üveg'},
+    {aliases:['csemegeuborka','csemege uborka','savanyú uborka','savanyu uborka','ecetes uborka'],label:'Csemegeuborka',category:'Alapélelmiszer',icon:'🥒',price:899,unit:'üveg'},
+    {aliases:['kovászos uborka','kovaszos uborka','kovi ubi'],label:'Kovászos uborka',category:'Alapélelmiszer',icon:'🥒',price:1099,unit:'üveg'},
+    {aliases:['jalapeño','jalapeno','jalapeño paprika','jalapeno paprika'],label:'Jalapeño',category:'Alapélelmiszer',icon:'🌶️',price:899,unit:'üveg'},
+    {aliases:['ecetes gyöngyhagyma','ecetes gyongyhagyma','gyöngyhagyma','gyongyhagyma'],label:'Ecetes gyöngyhagyma',category:'Alapélelmiszer',icon:'🧅',price:799,unit:'üveg'},
+    {aliases:['savanyított cékla','savanyitott cekla','ecetes cékla','ecetes cekla'],label:'Savanyított cékla',category:'Alapélelmiszer',icon:'🫙',price:799,unit:'üveg'},
+    {aliases:['csalamádé','csalamade','vegyes vágott','vegyes vagott','vegyes savanyúság','vegyes savanyusag'],label:'Csalamádé',category:'Alapélelmiszer',icon:'🫙',price:799,unit:'üveg'}
   ];
 
   function normalize(s) {
