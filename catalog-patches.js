@@ -4,7 +4,7 @@
   // Zoé Lista – tesztelés közben kifogott, kurált katalógus-kiegészítések.
   // Csak a beépített katalógus szabályait írhatják felül; a felhasználó saját tanításait nem.
   const LEARNED_KEY = 'zoe-lista-learned-v1';
-  const PATCH_VERSION = 1;
+  const PATCH_VERSION = 2;
 
   const PATCHES = [
     {
@@ -22,6 +22,22 @@
       icon:'🍪',
       price:799,
       unit:'csomag'
+    },
+    {
+      aliases:['zokni','cs zokni','csomag zokni','1 cs zokni','1 csomag zokni'],
+      label:'Zokni',
+      category:'Egyéb',
+      icon:'🧦',
+      price:1499,
+      unit:'csomag'
+    },
+    {
+      aliases:['kukorica csöves','kukorica csoves','csöves kukorica','csoves kukorica','kukorica, csöves','kukorica, csoves'],
+      label:'Csöves kukorica',
+      category:'Zöldség-gyümölcs',
+      icon:'🌽',
+      price:299,
+      unit:'db'
     }
   ];
 
