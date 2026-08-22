@@ -173,7 +173,9 @@ body.ui-compact .barcode-scan-btn{
 }
 
 @media(max-width:520px){
-  .barcode-scan-btn{width:44px;padding:0}
+  /* Az eredeti mobil form két oszlopos; a scannerrel három vezérlő van egy sorban. */
+  .composer form{grid-template-columns:minmax(0,1fr) auto auto}
+  .barcode-scan-btn{width:42px;padding:0}
   .barcode-card{padding:11px;border-radius:17px;gap:8px}
   .barcode-camera-wrap{aspect-ratio:1.25/1}
   .barcode-head p{font-size:.7rem}
