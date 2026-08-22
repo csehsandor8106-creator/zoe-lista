@@ -21,6 +21,7 @@
     'Alapélelmiszer':'🍚',
     'Snack és édesség':'🍿',
     'Italok':'🥤',
+    'Szeszes italok':'🥃',
     'Fagyasztott':'❄️',
     'Háztartás':'🧽',
     'Higiénia':'🧴',
@@ -39,7 +40,7 @@
     product(['marhacomb'],'Marhacomb','Hús és felvágott','🥩',5499,'kg'),
     product(['marha steak','steak','beef steak'],'Marhasteak','Hús és felvágott','🥩',7999,'kg'),
     product(['darált marha','darált marhahús'],'Darált marhahús','Hús és felvágott','🥩',4499,'kg'),
-    product(['sertéshús','sertés hús'],'Sertéshús','Hús és felvágott','🥩',2499,'kg'),
+    product(['sertéshús','sertés hús','disznóhús','disznó hús'],'Sertéshús','Hús és felvágott','🥩',2499,'kg'),
     product(['sertéskaraj','karaj'],'Sertéskaraj','Hús és felvágott','🥩',2299,'kg'),
     product(['tarja'],'Sertéstarja','Hús és felvágott','🥩',2499,'kg'),
     product(['darált hús','darált hús sertés'],'Darált hús','Hús és felvágott','🥩',2999,'kg'),
@@ -161,8 +162,15 @@
     product(['sió','rauch','hohes c','cappy'],'Gyümölcslé','Italok','🧃',799,'db','brand'),
     product(['szentkirályi','theodora','naturaqua','mizse'],'Ásványvíz','Italok','💧',199,'db','brand'),
     product(['hell','red bull','monster','burn'],'Energiaital','Italok','⚡',499,'db','brand'),
-    product(['sör'],'Sör','Italok','🍺',399),
-    product(['bor'],'Bor','Italok','🍷',1799,'üveg'),
+
+    product(['sör'],'Sör','Szeszes italok','🍺',399),
+    product(['bor'],'Bor','Szeszes italok','🍷',1799,'üveg'),
+    product(['pálinka','palinka'],'Pálinka','Szeszes italok','🥃',4999,'üveg'),
+    product(['vodka'],'Vodka','Szeszes italok','🍸',4499,'üveg'),
+    product(['whisky','whiskey'],'Whisky','Szeszes italok','🥃',5999,'üveg'),
+    product(['rum'],'Rum','Szeszes italok','🥃',4999,'üveg'),
+    product(['gin'],'Gin','Szeszes italok','🍸',4999,'üveg'),
+    product(['likőr','likor'],'Likőr','Szeszes italok','🥃',3999,'üveg'),
 
     product(['fagyasztott pizza'],'Fagyasztott pizza','Fagyasztott','🍕',1499),
     product(['jégkrém','fagyi','fagylalt'],'Jégkrém / fagylalt','Fagyasztott','🍦',799),
@@ -336,19 +344,43 @@
   function fallback(name) {
     if (hasAny(name,['ceruzaelem','ceruza elem','aa','aaa','aa elem','aaa elem','alkáli elem','alkali elem'])) return {category:'Háztartás',icon:'🔋',price:1499,unit:'csomag'};
     if (hasAny(name,['faszén','faszen','grillfaszén','grill faszén','brikett','grillbrikett','grill brikett'])) return {category:'Háztartás',icon:'🔥',price:2499,unit:'csomag'};
-    if (hasAny(name,['marha','marhahús','sertés','sertéshús','csirke','pulyka','hús','sonka','szalámi','virsli','kolbász','bacon','karaj','tarja'])) return {category:'Hús és felvágott',icon:'🥩',price:2999,unit:'kg'};
+    if (hasAny(name,['marha','marhahús','sertés','sertéshús','disznó','disznóhús','csirke','pulyka','hús','sonka','szalámi','virsli','kolbász','bacon','karaj','tarja'])) return {category:'Hús és felvágott',icon:'🥩',price:2999,unit:'kg'};
     if (hasAny(name,['hal','halfilé','lazac','tonhal','garnéla','rák'])) return {category:'Hal és tenger gyümölcsei',icon:'🐟',price:3499,unit:'kg'};
     if (hasAny(name,['alma','banán','répa','paradicsom','paprika','hagyma','uborka','burgonya','krumpli','dinnye','saláta','gomba','brokkoli','gyümölcs','zöldség'])) return {category:'Zöldség-gyümölcs',icon:'🥕',price:799,unit:'kg'};
     if (hasAny(name,['tej','sajt','vaj','joghurt','tejföl','túró','tojás','kefir'])) return {category:'Tejtermék és tojás',icon:'🥛',price:699,unit:'db'};
     if (hasAny(name,['kenyér','zsemle','kifli','bagett','croissant'])) return {category:'Pékáru',icon:'🥖',price:599,unit:'db'};
     if (hasAny(name,['chips','snack','nasi','csoki','csokoládé','keksz','cookie','popcorn','ropi','cukorka','gumicukor'])) return {category:'Snack és édesség',icon:hasAny(name,['keksz','cookie'])?'🍪':hasAny(name,['csoki','csokoládé'])?'🍫':hasAny(name,['popcorn'])?'🍿':'🥨',price:699,unit:'db'};
-    if (hasAny(name,['gyümölcslé','narancslé','almalé','üdítő','cola','kóla','energiaital','ásványvíz','sör','bor'])) return {category:'Italok',icon:'🥤',price:699,unit:'db'};
+    if (hasAny(name,['pálinka','palinka'])) return {category:'Szeszes italok',icon:'🥃',price:4999,unit:'üveg'};
+    if (hasAny(name,['whisky','whiskey','rum','likőr','likor'])) return {category:'Szeszes italok',icon:'🥃',price:4999,unit:'üveg'};
+    if (hasAny(name,['vodka','gin'])) return {category:'Szeszes italok',icon:'🍸',price:4999,unit:'üveg'};
+    if (hasAny(name,['sör'])) return {category:'Szeszes italok',icon:'🍺',price:399,unit:'db'};
+    if (hasAny(name,['bor'])) return {category:'Szeszes italok',icon:'🍷',price:1799,unit:'üveg'};
+    if (hasAny(name,['gyümölcslé','narancslé','almalé','üdítő','cola','kóla','energiaital','ásványvíz'])) return {category:'Italok',icon:'🥤',price:699,unit:'db'};
     if (hasAny(name,['mosogatószer','mosószer','öblítő','papírtörlő','toalettpapír','wc papír','szemeteszsák','gyufa','öngyújtó'])) return {category:'Háztartás',icon:'🧽',price:1299,unit:'db'};
     if (hasAny(name,['sampon','tusfürdő','fogkrém','fogkefe','dezodor','szappan','borotva'])) return {category:'Higiénia',icon:'🧴',price:1099,unit:'db'};
     if (hasAny(name,['macska','kutya','eledel','alom','macskaeledel','kutyaeledel'])) return {category:'Állateledel',icon:'🐾',price:1499,unit:'db'};
     if (hasAny(name,['rizs','tészta','liszt','cukor','só','olaj','kávé','tea','konzerv','zab'])) return {category:'Alapélelmiszer',icon:'🍚',price:699,unit:'db'};
     if (hasAny(name,['pelenka','bébiétel','tápszer'])) return {category:'Baba és gyermek',icon:'🍼',price:1999,unit:'db'};
     return {category:'Egyéb',icon:'🛒',price:699,unit:'db'};
+  }
+
+  function refreshEstimatedRecognition() {
+    let changed = false;
+    for (const item of items) {
+      if (item.source !== 'estimate') continue;
+      const oldCategory = item.category;
+      const rec = recognize(item.name), fb = fallback(item.name), next = rec || fb;
+      if (!next) continue;
+
+      if (item.category !== next.category) { item.category = next.category; changed = true; }
+      if (item.icon !== next.icon) { item.icon = next.icon; changed = true; }
+      if (item.price !== next.price) { item.price = next.price; changed = true; }
+      if (oldCategory === 'Egyéb' && item.unit === 'db' && next.unit && next.unit !== 'db') {
+        item.unit = next.unit;
+        changed = true;
+      }
+    }
+    return changed;
   }
 
   function extractPrice(text) {
@@ -509,5 +541,6 @@
   themeBtn.addEventListener('click',()=>applyTheme(document.documentElement.dataset.theme==='dark'?'light':'dark'));
 
   if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
+  if (refreshEstimatedRecognition()) save();
   render();
 })();
