@@ -28,6 +28,7 @@
     'Állateledel':'🐾',
     'Baba és gyermek':'🍼',
     'Ruházat':'👕',
+    'Virág és ajándék':'💐',
     'Egyéb':'🛒'
   };
   const categoryOrder = Object.keys(categories);
