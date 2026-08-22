@@ -1,17 +1,20 @@
 (() => {
   'use strict';
 
-  // Zoé Lista – görgetéskor kompakt gyorsbevitel.
-  // Csak UI-osztályokat és feliratokat módosít; az app adat- és felismerési logikájához nem nyúl.
+  // Zoé Lista – stabil kompakt gyorsbevitel.
+  // Fontos: a kompakt módot NEM a scrollY kapcsolja, mert a sticky composer
+  // saját magasságváltozása visszahat a scrollY-ra és görgetési pingpongot okozhat.
+  // Ehelyett a composer ELŐTT lévő topbar helyzete dönt, amelyet a composer
+  // összecsukása nem tud elmozdítani.
   const body = document.body;
+  const topbar = document.querySelector('.topbar');
   const input = document.getElementById('itemInput');
   const addButton = document.querySelector('#addForm .add-btn');
-  if (!body || !input || !addButton) return;
+  if (!body || !topbar || !input || !addButton) return;
 
   const normalPlaceholder = input.getAttribute('placeholder') || 'Termék hozzáadása';
   const normalButtonText = addButton.textContent || 'Hozzáadás';
   const compactPlaceholder = 'Termék hozzáadása…';
-  const THRESHOLD = 92;
 
   let compact = false;
   let frame = 0;
@@ -36,9 +39,17 @@
 
   function update() {
     frame = 0;
-    // Ha a felhasználó épp a mezőben dolgozik, maradjon a teljes Hozzáadás felirat.
-    const editing = document.activeElement === input;
-    apply(window.scrollY > THRESHOLD && !editing);
+
+    // Gépelés közben maradjon nyitva a teljes beviteli sáv.
+    if (document.activeElement === input) {
+      apply(false);
+      return;
+    }
+
+    // Stabil referencia: a topbar a composer előtt van, így a composer
+    // zsugorodása/nyílása ezt a mérést nem tudja visszabillenteni.
+    const topbarBottom = topbar.getBoundingClientRect().bottom;
+    apply(topbarBottom <= 8);
   }
 
   function schedule() {
@@ -47,8 +58,10 @@
   }
 
   window.addEventListener('scroll', schedule, {passive:true});
+  window.addEventListener('resize', schedule, {passive:true});
+  window.addEventListener('orientationchange', schedule, {passive:true});
   input.addEventListener('focus', schedule);
   input.addEventListener('blur', schedule);
-  window.addEventListener('resize', schedule, {passive:true});
+
   update();
 })();
