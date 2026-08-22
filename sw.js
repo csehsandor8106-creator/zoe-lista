@@ -1,5 +1,5 @@
-const CACHE='zoe-lista-v23';
-const ASSETS=['./','./index.html','./styles.css','./catalog-data.js','./market-catalog-2026.js','./family-catalog-2026.js','./family-grains-2026.js','./family-cleaning-2026.js','./catalog-patches.js','./catalog-stabilizer.js','./input-normalizer.js','./app.js','./unit-price-fixer.js','./price-policy.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
+const CACHE='zoe-lista-v24';
+const ASSETS=['./','./index.html','./styles.css','./catalog-data.js','./market-catalog-2026.js','./family-catalog-2026.js','./family-grains-2026.js','./family-cleaning-2026.js','./family-meat-2026.js','./catalog-patches.js','./catalog-stabilizer.js','./input-normalizer.js','./app.js','./unit-price-fixer.js','./price-policy.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(
