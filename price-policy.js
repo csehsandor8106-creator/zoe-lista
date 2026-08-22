@@ -14,21 +14,28 @@
     catch { return fallback; }
   }
 
+  function save(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+  }
+
   function findRule(name, learned) {
     const key = normalize(name);
-    if (learned[key]?.unit) return learned[key];
+    if (learned[key]?.unit) return {rule:learned[key], alias:key, exact:true};
 
     const padded = ` ${key} `;
     let best = null;
-    let bestLength = 0;
+    let bestAlias = '';
+
     for (const [alias, rule] of Object.entries(learned)) {
+      // Rövid szavaknál nincs laza substring matching.
       if (!rule?.unit || alias.length < 5) continue;
-      if (padded.includes(` ${alias} `) && alias.length > bestLength) {
+      if (padded.includes(` ${alias} `) && alias.length > bestAlias.length) {
         best = rule;
-        bestLength = alias.length;
+        bestAlias = alias;
       }
     }
-    return best;
+
+    return best ? {rule:best, alias:bestAlias, exact:false} : null;
   }
 
   function knownPrice(rule, unit) {
@@ -43,43 +50,104 @@
     const items = load(STATE_KEY, []);
     const learned = load(LEARNED_KEY, {});
     const memory = load(PRICE_MEMORY_KEY, {});
-    let changed = false;
+    let stateChanged = false;
+    let learnedChanged = false;
+    const changedIds = new Set();
 
     for (const item of items) {
       if (!item?.unit) continue;
-      const key = normalize(item.name);
-      const rule = findRule(item.name, learned);
-      if (!rule) continue;
 
+      const key = normalize(item.name);
+      const match = findRule(item.name, learned);
+      if (!match) continue;
+
+      let rule = match.rule;
+
+      // Ha egy kiegészített név (pl. „Jégkrém (tescós)”) csak szóhatáros
+      // rész-találattal ismert fel, tanuljuk meg a teljes nevet is ugyanahhoz
+      // a szabályhoz. Így az app és az árpolitika a következő körben már
+      // ugyanazt a pontos szabályt használja, nem tudnak pingpongozni.
+      if (!match.exact && ['estimate','estimate-unit','unknown'].includes(item.source)) {
+        const existing = learned[key];
+        if (!existing || existing.builtinCatalog) {
+          const derived = {
+            ...rule,
+            kind: rule.kind || 'learned',
+            builtinCatalog: rule.builtinCatalog !== false,
+            derivedCatalogAlias: true,
+            derivedFromAlias: match.alias
+          };
+          if (!existing || JSON.stringify(existing) !== JSON.stringify(derived)) {
+            learned[key] = derived;
+            learnedChanged = true;
+          }
+          rule = learned[key] || rule;
+        }
+      }
+
+      let itemChanged = false;
       const remembered = memory[key];
       const memoryUnitMismatch = item.source === 'user' && remembered && remembered.unit && remembered.unit !== item.unit && item.price === remembered.price;
+
       if (memoryUnitMismatch) {
         item.price = null;
         item.source = 'unknown';
-        changed = true;
-        continue;
+        itemChanged = true;
+      } else if (['estimate','estimate-unit','unknown'].includes(item.source)) {
+        const price = knownPrice(rule, item.unit);
+
+        if (price == null) {
+          if (item.price !== null) { item.price = null; itemChanged = true; }
+          if (item.source !== 'unknown') { item.source = 'unknown'; itemChanged = true; }
+        } else {
+          if (item.price !== price) { item.price = price; itemChanged = true; }
+          if (item.source === 'unknown') { item.source = 'estimate'; itemChanged = true; }
+        }
       }
 
-      if (!['estimate','estimate-unit','unknown'].includes(item.source)) continue;
-      const price = knownPrice(rule, item.unit);
-
-      if (price == null) {
-        if (item.price !== null) { item.price = null; changed = true; }
-        if (item.source !== 'unknown') { item.source = 'unknown'; changed = true; }
-      } else {
-        if (item.price !== price) { item.price = price; changed = true; }
-        if (item.source === 'unknown') { item.source = 'estimate'; changed = true; }
+      if (itemChanged) {
+        stateChanged = true;
+        changedIds.add(String(item.id));
       }
     }
 
-    if (changed) {
-      try { localStorage.setItem(STATE_KEY, JSON.stringify(items)); } catch {}
-    }
-    return changed;
+    if (learnedChanged) save(LEARNED_KEY, learned);
+    if (stateChanged) save(STATE_KEY, items);
+
+    return {stateChanged, changedIds};
   }
 
   function money(n) {
     return new Intl.NumberFormat('hu-HU',{maximumFractionDigits:0}).format(Math.round(n)) + ' Ft';
+  }
+
+  function syncCorrectedRows(changedIds) {
+    if (!changedIds?.size) return;
+
+    const items = load(STATE_KEY, []);
+    const byId = new Map(items.map(i => [String(i.id), i]));
+
+    for (const id of changedIds) {
+      const item = byId.get(String(id));
+      const row = document.querySelector(`.item[data-id="${CSS.escape(String(id))}"]`);
+      if (!item || !row) continue;
+
+      if (item.price == null || item.source === 'unknown') continue;
+
+      const badge = row.querySelector('.pill.estimate, .pill.user');
+      if (badge) {
+        badge.textContent = item.source === 'user' ? 'saját ár' : '≈ becsült';
+        badge.classList.toggle('user', item.source === 'user');
+        badge.classList.toggle('estimate', item.source !== 'user');
+      }
+
+      const priceLine = row.querySelector('.price-line');
+      if (priceLine) {
+        const qty = Number(item.qty) || 1;
+        const unit = item.unit || 'db';
+        priceLine.innerHTML = `${money(item.price * qty)} <span class="unit">(${money(item.price)}/${unit})</span>`;
+      }
+    }
   }
 
   function decorateUnknownPrices() {
@@ -100,22 +168,35 @@
       const priceLine = row.querySelector('.price-line');
       if (priceLine) priceLine.innerHTML = '— <span class="unit">(ár megadása a ✎ gombbal)</span>';
     }
+  }
 
-    if (unknown.length) {
-      const knownSum = items.reduce((sum, i) => sum + (Number.isFinite(i?.price) ? i.price * i.qty : 0), 0);
-      const total = document.getElementById('totalText');
-      if (total) total.textContent = `≈ ${money(knownSum)} + ?`;
-      const count = document.getElementById('countText');
-      if (count && !count.textContent.includes('ár nélkül')) count.textContent += ` • ${unknown.length} ár nélkül`;
+  function refreshTotal() {
+    const items = load(STATE_KEY, []);
+    const unknown = items.filter(i => i?.price == null || i?.source === 'unknown');
+    const knownSum = items.reduce((sum, i) => {
+      const price = Number(i?.price);
+      const qty = Number(i?.qty) || 0;
+      return sum + (Number.isFinite(price) ? price * qty : 0);
+    }, 0);
+
+    const total = document.getElementById('totalText');
+    if (total) total.textContent = unknown.length ? `≈ ${money(knownSum)} + ?` : `≈ ${money(knownSum)}`;
+
+    const count = document.getElementById('countText');
+    if (count) {
+      count.textContent = count.textContent.replace(/\s*•\s*\d+\s+ár nélkül/g, '');
+      if (unknown.length) count.textContent += ` • ${unknown.length} ár nélkül`;
     }
   }
 
   function refreshPolicy() {
-    if (fixState()) {
-      location.reload();
-      return;
-    }
+    // FONTOS: itt szándékosan nincs location.reload().
+    // Egy becsült ár korrekciója nem indíthat teljes oldal-újratöltést,
+    // különben két eltérő katalógusszabály végtelen villogást okozhat.
+    const result = fixState();
+    syncCorrectedRows(result.changedIds);
     decorateUnknownPrices();
+    refreshTotal();
   }
 
   setTimeout(refreshPolicy, 0);
