@@ -27,6 +27,7 @@
     'Higiénia':'🧴',
     'Állateledel':'🐾',
     'Baba és gyermek':'🍼',
+    'Ruházat':'👕',
     'Egyéb':'🛒'
   };
   const categoryOrder = Object.keys(categories);
@@ -346,6 +347,10 @@
   function fallback(name) {
     if (hasAny(name,['ceruzaelem','ceruza elem','aa','aaa','aa elem','aaa elem','alkáli elem','alkali elem'])) return {category:'Háztartás',icon:'🔋',price:1499,unit:'csomag'};
     if (hasAny(name,['faszén','faszen','grillfaszén','grill faszén','brikett','grillbrikett','grill brikett'])) return {category:'Háztartás',icon:'🔥',price:2499,unit:'csomag'};
+    if (hasAny(name,['fogpiszkáló','fogpiszkalo','fogniszkáló','fogniszkalo'])) return {category:'Háztartás',icon:'🦷',price:399,unit:'csomag'};
+    if (hasAny(name,['póló','polo','trikó','triko'])) return {category:'Ruházat',icon:'👕',price:2499,unit:'db'};
+    if (hasAny(name,['zokni'])) return {category:'Ruházat',icon:'🧦',price:1499,unit:'csomag'};
+    if (hasAny(name,['gatya','alsónadrág','alsónadrag','boxer','boxeralsó','boxeralso'])) return {category:'Ruházat',icon:'🩲',price:2999,unit:'csomag'};
     if (hasAny(name,['csirke','egész csirke','egesz csirke'])) return {category:'Hús és felvágott',icon:'🍗',price:1399,unit:'kg'};
     if (hasAny(name,['marha','marhahús','sertés','sertéshús','disznó','disznóhús','pulyka','hús','sonka','szalámi','virsli','kolbász','bacon','karaj','tarja'])) return {category:'Hús és felvágott',icon:'🥩',price:2999,unit:'kg'};
     if (hasAny(name,['hal','halfilé','lazac','tonhal','garnéla','rák'])) return {category:'Hal és tenger gyümölcsei',icon:'🐟',price:3499,unit:'kg'};
