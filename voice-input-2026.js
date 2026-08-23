@@ -114,7 +114,6 @@
     for (let i=1;i<words.length;i++) {
       const n = parseNumberToken(words[i]);
       if (n == null) continue;
-      // Új tételnek tekintjük a számot, ha előtte már legalább egy valódi szó áll.
       const previous = words.slice(starts[starts.length-1], i);
       const productish = previous.filter(w => !UNIT_WORDS.has(String(w).toLowerCase())).length >= 1;
       if (productish) starts.push(i);
@@ -249,6 +248,8 @@
 
   let recognition = null;
   let listening = false;
+  let keepListening = false;
+  let restartTimer = 0;
   let finalText = '';
 
   function setStatus(text, state='') {
@@ -258,9 +259,10 @@
 
   function setListening(value) {
     listening = value;
-    dialog.classList.toggle('is-listening',value);
-    micButton.classList.toggle('is-listening',value);
-    listenLabel.textContent = value ? 'Hallgatlak… koppints a leállításhoz' : 'Beszélés indítása';
+    const active = keepListening || listening;
+    dialog.classList.toggle('is-listening',active);
+    micButton.classList.toggle('is-listening',active);
+    listenLabel.textContent = active ? 'Hallgatlak… koppints a leállításhoz' : 'Beszélés indítása';
   }
 
   function renderParsed() {
@@ -295,38 +297,39 @@
     if (!rows.length) preview.hidden = true;
   }
 
+  function finishTranscriptStatus() {
+    if (transcript.value.trim()) {
+      renderParsed();
+      setStatus(`✓ Feldolgozva: ${itemsBox.querySelectorAll('.voice-item-input').length} tétel. Ellenőrizd, aztán add hozzá.`,'success');
+    } else {
+      setStatus('Beszélés leállítva. Koppints a mikrofonra az újrakezdéshez.');
+    }
+  }
+
   async function createRecognition() {
     if (!SpeechRecognition) return null;
     const r = new SpeechRecognition();
     r.lang = 'hu-HU';
-    r.continuous = false;
+    r.continuous = true;
     r.interimResults = true;
     r.maxAlternatives = 1;
     return r;
   }
 
-  async function startListening() {
-    if (listening) {
-      try { recognition?.stop(); } catch {}
-      return;
-    }
-    if (!SpeechRecognition) {
-      setStatus('A Brave ezen a készüléken nem ad közvetlen webes beszédfelismerést. Koppints a szövegmezőbe, és használd a telefon billentyűzetének mikrofonját; Zoé ugyanúgy több tételre bontja.', 'warn');
-      transcript.focus();
+  async function beginRecognition() {
+    if (!keepListening || !dialog.open) return;
+    recognition = await createRecognition();
+    if (!recognition) {
+      keepListening = false;
+      setListening(false);
       return;
     }
 
-    finalText = '';
-    transcript.value = '';
-    preview.hidden = true;
-    itemsBox.innerHTML = '';
-    addAll.disabled = true;
-    recognition = await createRecognition();
-    if (!recognition) return;
+    let fatalError = false;
 
     recognition.onstart = () => {
       setListening(true);
-      setStatus('Hallgatlak… mondd természetesen a bevásárlólistát.', 'listening');
+      setStatus('Hallgatlak… nyugodtan tarthatsz hosszabb szünetet is a termékek között.', 'listening');
     };
     recognition.onresult = event => {
       let interim = '';
@@ -340,30 +343,91 @@
     };
     recognition.onerror = event => {
       const code = event?.error || '';
+
+      if (code === 'no-speech') {
+        setStatus('Csend van… továbbra is hallgatlak. Folytasd, amikor szeretnéd.', 'listening');
+        return;
+      }
+      if (code === 'aborted' && !keepListening) return;
+
+      fatalError = ['not-allowed','service-not-allowed','network','audio-capture'].includes(code);
+      if (fatalError) keepListening = false;
+
       const message = code === 'not-allowed' || code === 'service-not-allowed'
         ? 'A mikrofon vagy a beszédfelismerés nincs engedélyezve. A szövegmezőben a billentyűzet mikrofonja is használható.'
-        : code === 'no-speech'
-          ? 'Nem hallottam beszédet. Próbáld újra, vagy diktálj a szövegmezőbe.'
-          : code === 'network'
-            ? 'A böngésző beszédfelismerő szolgáltatása most nem érhető el. A billentyűzetes diktálás továbbra is használható.'
-            : 'Nem sikerült a beszédfelismerés. Próbáld újra vagy használd a billentyűzet mikrofonját.';
-      setStatus(message,'warn');
+        : code === 'network'
+          ? 'A böngésző beszédfelismerő szolgáltatása most nem érhető el. A billentyűzetes diktálás továbbra is használható.'
+          : code === 'audio-capture'
+            ? 'A mikrofont most nem sikerült elérni. Próbáld újra, vagy használd a billentyűzet mikrofonját.'
+            : 'A beszédfelismerés egy pillanatra megszakadt. Ha lehet, Zoé automatikusan folytatja.';
+      setStatus(message, fatalError ? 'warn' : 'listening');
     };
     recognition.onend = () => {
+      recognition = null;
       setListening(false);
-      if (transcript.value.trim()) {
-        renderParsed();
-        setStatus(`✓ Feldolgozva: ${itemsBox.querySelectorAll('.voice-item-input').length} tétel. Ellenőrizd, aztán add hozzá.`,'success');
+
+      if (keepListening && dialog.open && !fatalError) {
+        setStatus('Csend van… még hallgatlak. Folytasd nyugodtan.', 'listening');
+        clearTimeout(restartTimer);
+        restartTimer = setTimeout(() => beginRecognition(), 280);
+        return;
       }
+
+      keepListening = false;
+      setListening(false);
+      finishTranscriptStatus();
     };
 
     try { recognition.start(); }
-    catch { setStatus('A beszédfelismerést most nem sikerült elindítani. Próbáld újra.','warn'); }
+    catch {
+      recognition = null;
+      if (keepListening && dialog.open) {
+        clearTimeout(restartTimer);
+        restartTimer = setTimeout(() => beginRecognition(), 500);
+      } else {
+        setStatus('A beszédfelismerést most nem sikerült elindítani. Próbáld újra.','warn');
+      }
+    }
+  }
+
+  async function startListening() {
+    if (keepListening || listening) {
+      keepListening = false;
+      clearTimeout(restartTimer);
+      restartTimer = 0;
+      const activeRecognition = recognition;
+      if (activeRecognition) {
+        try { activeRecognition.stop(); } catch { try { activeRecognition.abort(); } catch {} }
+      } else {
+        setListening(false);
+        finishTranscriptStatus();
+      }
+      return;
+    }
+
+    if (!SpeechRecognition) {
+      setStatus('A Brave ezen a készüléken nem ad közvetlen webes beszédfelismerést. Koppints a szövegmezőbe, és használd a telefon billentyűzetének mikrofonját; Zoé ugyanúgy több tételre bontja.', 'warn');
+      transcript.focus();
+      return;
+    }
+
+    finalText = '';
+    transcript.value = '';
+    preview.hidden = true;
+    itemsBox.innerHTML = '';
+    addAll.disabled = true;
+    keepListening = true;
+    setListening(false);
+    await beginRecognition();
   }
 
   async function addParsedItems() {
     const values = [...itemsBox.querySelectorAll('.voice-item-input')].map(el => el.value.trim()).filter(Boolean);
     if (!values.length) return;
+    keepListening = false;
+    clearTimeout(restartTimer);
+    restartTimer = 0;
+    if (recognition) { try { recognition.abort(); } catch {} }
     addAll.disabled = true;
     setStatus(`${values.length} tétel hozzáadása…`,'listening');
     for (const value of values) {
@@ -383,6 +447,7 @@
   }
 
   function openVoice() {
+    finalText = '';
     transcript.value = '';
     itemsBox.innerHTML = '';
     preview.hidden = true;
@@ -400,15 +465,17 @@
   transcript.addEventListener('input',()=>{ if (!listening) renderParsed(); });
   itemsBox.addEventListener('input',updateCount);
 
-  dialog.addEventListener('close',()=>{
-    if (listening) { try { recognition?.abort(); } catch {} }
-    setListening(false);
+  function stopVoiceSession() {
+    keepListening = false;
+    clearTimeout(restartTimer);
+    restartTimer = 0;
+    if (recognition) { try { recognition.abort(); } catch {} }
     recognition = null;
-  });
-  dialog.addEventListener('cancel',()=>{
-    if (listening) { try { recognition?.abort(); } catch {} }
     setListening(false);
-  });
+  }
+
+  dialog.addEventListener('close',stopVoiceSession);
+  dialog.addEventListener('cancel',stopVoiceSession);
   dialog.addEventListener('click',event=>{ if (event.target === dialog) dialog.close(); });
 
   window.ZoeVoice2026 = {parse:parseSpeech};
