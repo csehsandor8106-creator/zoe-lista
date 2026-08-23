@@ -1,186 +1,168 @@
 (() => {
   'use strict';
 
-  // Zoé Lista – mini vásárlási statisztika.
-  // A költési napló v73-tól gyűlik; korábbi összegeket nem találunk ki.
+  // Zoé Lista – mini statisztika.
+  // Vásárlási esemény: a szokásmemória valódi kipipálási időpontjai.
+  // Költés: az eseményhez időben legközelebbi ismert ár, ezért mindig becslésként jelenik meg.
+  const HABITS_KEY='zoe-lista-habits-v1';
+  const HISTORY_KEY='zoe-lista-price-history-v1';
+  const PRICE_MEMORY_KEY='zoe-lista-price-memory-v1';
+  const LEARNED_KEY='zoe-lista-learned-v1';
   const STATE_KEY='zoe-lista-state-v1';
-  const LEDGER_KEY='zoe-lista-purchase-ledger-v1';
-  const FREQUENT_KEY='zoe-lista-frequent-v1';
-  const ACTIVE_STORE_KEY='zoe-lista-active-store-v1';
-  const MAX_EVENTS=2500;
 
   const toolbar=document.querySelector('.toolbar');
   const listRoot=document.getElementById('listRoot');
   if(!toolbar||!listRoot)return;
 
   const load=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback}catch{return fallback}};
-  const save=(key,value)=>{try{localStorage.setItem(key,JSON.stringify(value))}catch{}};
-  const normalize=value=>String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+  const normalize=value=>String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
   const money=value=>new Intl.NumberFormat('hu-HU',{maximumFractionDigits:0}).format(Math.round(Number(value)||0))+' Ft';
   const num=value=>new Intl.NumberFormat('hu-HU',{maximumFractionDigits:2}).format(Number(value)||0);
+  const hKey=(name,unit)=>`${normalize(name)}|${normalize(unit||'db')}`;
   const monthKey=ts=>{const d=new Date(Number(ts)||Date.now());return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`};
-  const monthLabel=key=>{const [y,m]=String(key).split('-').map(Number);return new Intl.DateTimeFormat('hu-HU',{year:'numeric',month:'long'}).format(new Date(y,m-1,1))};
-  const cleanName=item=>String(item?.displayName||window.ZoePackSize2026?.baseFromInternal?.(item?.name)||item?.name||'').trim();
-  const eventId=item=>String(item?.id||'');
+  const monthLabel=key=>{const[y,m]=String(key).split('-').map(Number);return new Intl.DateTimeFormat('hu-HU',{year:'numeric',month:'long'}).format(new Date(y,m-1,1))};
 
-  function ledger(){const data=load(LEDGER_KEY,[]);return Array.isArray(data)?data:[]}
-  function writeLedger(data){save(LEDGER_KEY,data.slice(-MAX_EVENTS));try{window.dispatchEvent(new StorageEvent('storage',{key:LEDGER_KEY,newValue:localStorage.getItem(LEDGER_KEY),storageArea:localStorage,url:location.href}))}catch{}}
-
-  function recordItem(item,at=Date.now(),source='check'){
-    if(!item?.id||!item?.name)return false;
-    const id=eventId(item),data=ledger();
-    if(data.some(e=>String(e.itemId)===id&&e.source==='check'))return false;
-    const qty=Math.max(.01,Number(item.qty)||1),unitPrice=Math.max(0,Number(item.price)||0),total=qty*unitPrice;
-    data.push({
-      id:`${source}:${id}:${Number(at)||Date.now()}`,
-      itemId:id,
-      name:cleanName(item)||item.name,
-      rawName:item.name,
-      icon:item.icon||'🛒',
-      category:item.category||'Egyéb',
-      qty,
-      unit:item.unit||'db',
-      unitPrice,
-      total,
-      estimated:item.source!=='user',
-      priceSource:item.source||'estimate',
-      storeId:localStorage.getItem(ACTIVE_STORE_KEY)||'general',
-      at:Number(at)||Date.now(),
-      source
-    });
-    writeLedger(data);
-    return true;
+  function cleanName(name){
+    const base=window.ZoePackSize2026?.baseFromInternal?.(name);
+    if(base)return base;
+    return String(name||'').replace(/\s*⟦\s*\d+(?:[.,]\d+)?\s*(?:g|kg|ml|l|db)\s*⟧\s*$/i,'').trim();
+  }
+  function packLabel(name){
+    const pack=window.ZoePackSize2026?.packFromInternal?.(name);
+    return pack?.value&&pack?.unit?`${num(pack.value)} ${pack.unit}`:'';
   }
 
-  function removeItemEvent(itemId){
-    const id=String(itemId||'');if(!id)return false;
-    const data=ledger(),next=data.filter(e=>!(String(e.itemId)===id&&e.source==='check'));
-    if(next.length===data.length)return false;
-    writeLedger(next);return true;
+  function nearestHistoryPrice(name,unit,at,history){
+    const bucket=history[hKey(name,unit)];
+    const entries=(bucket?.entries||[]).filter(e=>Number(e?.price)>0&&Number.isFinite(Number(e?.at)))
+      .map(e=>({price:Number(e.price),at:Number(e.at),source:e.source||'history'})).sort((a,b)=>a.at-b.at);
+    if(!entries.length)return null;
+    let before=null,after=null;
+    for(const entry of entries){if(entry.at<=at)before=entry;else{after=entry;break}}
+    const chosen=before||after;
+    return chosen?{...chosen,kind:'history'}:null;
   }
 
-  const openBtn=document.createElement('button');
-  openBtn.type='button';openBtn.className='soft-btn stats-open-btn';openBtn.innerHTML='<span aria-hidden="true">📊</span> Statisztika';toolbar.appendChild(openBtn);
+  function priceFor(habit,at,data){
+    const name=String(habit.name||''),unit=habit.unit||'db';
+    const history=nearestHistoryPrice(name,unit,at,data.history);
+    if(history)return history;
 
-  const dialog=document.createElement('dialog');
-  dialog.className='stats-dialog';
-  dialog.innerHTML=`
+    // Kiszerelésnél csak a pontos kiszereléshez tartozó árat fogadjuk el.
+    const hasPack=Boolean(window.ZoePackSize2026?.packFromInternal?.(name));
+    const stateItem=data.state.find(item=>normalize(item?.name)===normalize(name)&&normalize(item?.unit||'db')===normalize(unit)&&Number(item?.price)>0);
+    if(stateItem)return{price:Number(stateItem.price),kind:stateItem.source==='user'?'current-user':'current-estimate',at:Number(stateItem.createdAt)||Date.now()};
+
+    const mem=data.priceMemory[normalize(name)];
+    if(Number(mem?.price)>0&&(!mem.unit||normalize(mem.unit)===normalize(unit)))return{price:Number(mem.price),kind:'memory',at:Date.now()};
+
+    const learned=data.learned[normalize(name)];
+    if(Number(learned?.price)>0&&(!learned.unit||normalize(learned.unit)===normalize(unit)))return{price:Number(learned.price),kind:'learned',at:Date.now()};
+
+    // Csupasz névre csak nem-kiszereléses terméknél próbálunk visszaesni.
+    if(!hasPack){
+      const plain=cleanName(name);
+      if(plain&&normalize(plain)!==normalize(name)){
+        const p=nearestHistoryPrice(plain,unit,at,data.history);if(p)return p;
+      }
+    }
+    return null;
+  }
+
+  function allEvents(){
+    const habits=load(HABITS_KEY,{}),data={
+      history:load(HISTORY_KEY,{}),priceMemory:load(PRICE_MEMORY_KEY,{}),learned:load(LEARNED_KEY,{}),state:load(STATE_KEY,[])
+    };
+    if(!Array.isArray(data.state))data.state=[];
+    const events=[];
+    for(const habit of Object.values(habits||{})){
+      if(!habit?.name)continue;
+      const purchases=(Array.isArray(habit.purchases)?habit.purchases:[]).map(Number).filter(Number.isFinite);
+      const qty=Math.max(.01,Number(habit.qty)||1),unit=habit.unit||'db',rawName=String(habit.name),name=cleanName(rawName)||rawName;
+      for(const at of purchases){
+        const price=priceFor(habit,at,data),total=price?.price>0?qty*Number(price.price):null;
+        events.push({
+          at,name,rawName,pack:packLabel(rawName),icon:habit.icon||'🛒',category:habit.category||'Egyéb',qty,unit,
+          price:price?.price||null,total,priceKind:price?.kind||'missing'
+        });
+      }
+    }
+    return events.sort((a,b)=>a.at-b.at);
+  }
+
+  const openBtn=document.createElement('button');openBtn.type='button';openBtn.className='soft-btn stats-open-btn';openBtn.innerHTML='<span aria-hidden="true">📊</span> Statisztika';toolbar.appendChild(openBtn);
+
+  const dialog=document.createElement('dialog');dialog.className='stats-dialog';dialog.innerHTML=`
     <div class="stats-shell">
-      <div class="stats-head">
-        <div><h2>📊 Mini statisztika</h2><p>Valódi kipipálásokból épülő vásárlási kép.</p></div>
-        <button type="button" class="icon-btn stats-close" aria-label="Bezárás">✕</button>
-      </div>
-      <div class="stats-period-row">
-        <label>Időszak<select class="stats-month"></select></label>
-        <span class="stats-ledger-note">A költési napló a v73-tól gyűlik.</span>
-      </div>
+      <div class="stats-head"><div><h2>📊 Mini statisztika</h2><p>A kipipált vásárlásokból és az ismert árakból számolva.</p></div><button type="button" class="icon-btn stats-close" aria-label="Bezárás">✕</button></div>
+      <div class="stats-period-row"><label>Hónap<select class="stats-month"></select></label><span class="stats-ledger-note">A költés becslés: az időben legközelebbi ismert árat használja.</span></div>
       <section class="stats-cards">
-        <article><span>E havi költés</span><strong class="stats-spend">0 Ft</strong><small class="stats-spend-note"></small></article>
-        <article><span>Vásárlások</span><strong class="stats-count">0</strong><small>rögzített tétel</small></article>
-        <article><span>Legnagyobb kategória</span><strong class="stats-top-cat">—</strong><small class="stats-top-cat-value"></small></article>
+        <article><span>≈ Havi költés</span><strong class="stats-spend">—</strong><small class="stats-spend-note"></small></article>
+        <article><span>Vásárlási tételek</span><strong class="stats-count">0</strong><small>kipipált vásárlások</small></article>
+        <article><span>Top kategória</span><strong class="stats-top-cat">—</strong><small class="stats-top-cat-value"></small></article>
       </section>
-      <section class="stats-section">
-        <div class="stats-title"><h3>🏆 Legtöbbet vásárolt</h3><small class="stats-top-products-caption"></small></div>
-        <div class="stats-products"></div>
-      </section>
-      <section class="stats-section">
-        <div class="stats-title"><h3>💸 Költés kategóriánként</h3><small>kiválasztott hónap</small></div>
-        <div class="stats-categories"></div>
-      </section>
-      <div class="stats-empty" hidden><span>📈</span><strong>A költési statisztika most kezdi gyűjteni az adatokat.</strong><small>Pipálj ki megvett tételeket, és itt hamarosan megjelennek a havi összegek.</small></div>
-    </div>`;
-  document.body.appendChild(dialog);
+      <section class="stats-section"><div class="stats-title"><h3>🏆 Legtöbbet vásárolt</h3><small class="stats-top-products-caption">kiválasztott hónap</small></div><div class="stats-products"></div></section>
+      <section class="stats-section"><div class="stats-title"><h3>🧺 Költés kategóriánként</h3><small>becsült havi arány</small></div><div class="stats-categories"></div></section>
+      <div class="stats-empty" hidden><span>📈</span><strong>Erre a hónapra még nincs vásárlási adat.</strong><small>Zoé a kipipált tételekből építi a statisztikát.</small></div>
+    </div>`;document.body.appendChild(dialog);
 
   const closeBtn=dialog.querySelector('.stats-close'),monthSelect=dialog.querySelector('.stats-month');
   const spendEl=dialog.querySelector('.stats-spend'),spendNote=dialog.querySelector('.stats-spend-note'),countEl=dialog.querySelector('.stats-count');
   const topCatEl=dialog.querySelector('.stats-top-cat'),topCatValue=dialog.querySelector('.stats-top-cat-value');
   const productsEl=dialog.querySelector('.stats-products'),productCaption=dialog.querySelector('.stats-top-products-caption'),categoriesEl=dialog.querySelector('.stats-categories'),emptyEl=dialog.querySelector('.stats-empty');
 
-  function monthsAvailable(){
-    const set=new Set([monthKey(Date.now())]);
-    for(const e of ledger())if(e?.at)set.add(monthKey(e.at));
-    return [...set].sort().reverse();
+  function monthsAvailable(events){
+    const set=new Set([monthKey(Date.now())]);for(const e of events)if(e?.at)set.add(monthKey(e.at));return[...set].sort().reverse();
   }
-
-  function refreshMonthOptions(){
-    const current=monthSelect.value||monthKey(Date.now()),months=monthsAvailable();
-    monthSelect.innerHTML=months.map(key=>`<option value="${key}">${monthLabel(key)}</option>`).join('');
-    monthSelect.value=months.includes(current)?current:months[0];
+  function refreshMonthOptions(events){
+    const current=monthSelect.value||monthKey(Date.now()),months=monthsAvailable(events);
+    monthSelect.innerHTML=months.map(key=>`<option value="${key}">${monthLabel(key)}</option>`).join('');monthSelect.value=months.includes(current)?current:months[0];
   }
+  function monthlyEvents(events){const key=monthSelect.value||monthKey(Date.now());return events.filter(e=>monthKey(e.at)===key)}
 
-  function monthlyEntries(){const key=monthSelect.value||monthKey(Date.now());return ledger().filter(e=>monthKey(e.at)===key&&Number(e.total)>=0)}
-
-  function topProductsFor(entries){
-    if(entries.length){
-      const map=new Map();
-      for(const e of entries){
-        const key=normalize(e.name);if(!key)continue;
-        const prev=map.get(key)||{name:e.name,icon:e.icon||'🛒',count:0,total:0};prev.count+=1;prev.total+=Number(e.total)||0;map.set(key,prev);
-      }
-      return{label:'kiválasztott hónap',items:[...map.values()].sort((a,b)=>b.count-a.count||b.total-a.total).slice(0,5)};
+  function productStats(entries){
+    const map=new Map();
+    for(const e of entries){
+      const key=`${normalize(e.rawName)}|${normalize(e.unit)}`;const prev=map.get(key)||{name:e.name,pack:e.pack,icon:e.icon,count:0,total:0,priced:0};
+      prev.count+=1;if(Number(e.total)>0){prev.total+=Number(e.total);prev.priced+=1}map.set(key,prev);
     }
-    const frequent=load(FREQUENT_KEY,{});
-    const items=Object.values(frequent).filter(x=>x?.name&&(Number(x.doneCount)||0)>0)
-      .map(x=>({name:x.name,icon:x.icon||'🛒',count:Number(x.doneCount)||0,total:0}))
-      .sort((a,b)=>b.count-a.count||String(a.name).localeCompare(String(b.name),'hu',{sensitivity:'base'})).slice(0,5);
-    return{label:items.length?'eddigi kipipálások':'még nincs adat',items};
+    return[...map.values()].sort((a,b)=>b.count-a.count||b.total-a.total||a.name.localeCompare(b.name,'hu',{sensitivity:'base'})).slice(0,5);
   }
-
   function categoryStats(entries){
     const map=new Map();
-    for(const e of entries){const key=e.category||'Egyéb';map.set(key,(map.get(key)||0)+(Number(e.total)||0))}
-    return[...map.entries()].map(([name,total])=>({name,total})).sort((a,b)=>b.total-a.total);
+    for(const e of entries){const key=e.category||'Egyéb',prev=map.get(key)||{name:key,total:0,count:0,priced:0};prev.count+=1;if(Number(e.total)>0){prev.total+=Number(e.total);prev.priced+=1}map.set(key,prev)}
+    return[...map.values()].sort((a,b)=>b.total-a.total||b.count-a.count||a.name.localeCompare(b.name,'hu',{sensitivity:'base'}));
   }
 
   function render(){
-    refreshMonthOptions();
-    const entries=monthlyEntries(),total=entries.reduce((sum,e)=>sum+(Number(e.total)||0),0),estimated=entries.filter(e=>e.estimated),cats=categoryStats(entries),top=cats[0];
-    spendEl.textContent=(estimated.length?'≈ ':'')+money(total);
-    spendNote.textContent=entries.length?(estimated.length?`${estimated.length} tételnél becsült ár is szerepel`:'csak saját/tényleges árakból'):'még nincs rögzített költés';
-    countEl.textContent=String(entries.length);
-    topCatEl.textContent=top?.name||'—';topCatValue.textContent=top?money(top.total):'';
+    const events=allEvents();refreshMonthOptions(events);const entries=monthlyEvents(events),priced=entries.filter(e=>Number(e.total)>0),total=priced.reduce((sum,e)=>sum+Number(e.total),0),cats=categoryStats(entries),top=cats.find(x=>x.total>0)||cats[0];
+    spendEl.textContent=priced.length?`≈ ${money(total)}`:'—';countEl.textContent=String(entries.length);
+    spendNote.textContent=entries.length?`${priced.length}/${entries.length} vásárláshoz van használható ár · ${entries.length?Math.round(priced.length/entries.length*100):0}% lefedettség`:'még nincs havi adat';
+    topCatEl.textContent=top?.name||'—';topCatValue.textContent=top?(top.total>0?`≈ ${money(top.total)}`:`${top.count} vásárlás`):'';
 
-    const products=topProductsFor(entries);productCaption.textContent=products.label;
-    productsEl.innerHTML='';
-    for(const [index,item] of products.items.entries()){
-      const row=document.createElement('div');row.className='stats-product-row';
-      row.innerHTML=`<span class="stats-rank">${index+1}</span><span class="stats-product-icon">${item.icon||'🛒'}</span><strong></strong><b>${item.count}×</b>`;
-      row.querySelector('strong').textContent=item.name;productsEl.appendChild(row);
+    const products=productStats(entries);productCaption.textContent=products.length?'kiválasztott hónap':'még nincs adat';productsEl.innerHTML='';
+    for(const[index,item]of products.entries()){
+      const row=document.createElement('div');row.className='stats-product-row';row.innerHTML=`<span class="stats-rank">${index+1}</span><span class="stats-product-icon">${item.icon||'🛒'}</span><strong></strong><b>${item.count}×</b>`;
+      row.querySelector('strong').textContent=`${item.name}${item.pack?` · ${item.pack}`:''}`;row.title=item.priced?`Becsült költés: ${money(item.total)}`:'Nincs hozzá használható áradat';productsEl.appendChild(row);
     }
-    if(!products.items.length)productsEl.innerHTML='<div class="stats-no-data">Még nincs elég vásárlási adat.</div>';
+    if(!products.length)productsEl.innerHTML='<div class="stats-no-data">Ebben a hónapban még nincs vásárlási adat.</div>';
 
-    categoriesEl.innerHTML='';
-    const max=top?.total||1;
+    categoriesEl.innerHTML='';const max=Math.max(1,...cats.map(x=>x.total));
     for(const item of cats.slice(0,8)){
-      const row=document.createElement('div');row.className='stats-category-row';const pct=Math.max(2,Math.min(100,(item.total/max)*100));
-      row.innerHTML=`<div class="stats-category-line"><strong></strong><b>${money(item.total)}</b></div><div class="stats-bar"><span style="width:${pct}%"></span></div>`;
+      const pct=item.total>0?Math.max(3,Math.min(100,item.total/max*100)):2,row=document.createElement('div');row.className='stats-category-row';
+      row.innerHTML=`<div class="stats-category-line"><strong></strong><b>${item.total>0?`≈ ${money(item.total)}`:`${item.count}× · áradat nélkül`}</b></div><div class="stats-bar"><span style="width:${pct}%"></span></div>`;
       row.querySelector('strong').textContent=item.name;categoriesEl.appendChild(row);
     }
-    if(!cats.length)categoriesEl.innerHTML='<div class="stats-no-data">Ebben a hónapban még nincs kategóriánkénti költési adat.</div>';
+    if(!cats.length)categoriesEl.innerHTML='<div class="stats-no-data">Ebben a hónapban még nincs kategóriánkénti adat.</div>';
     emptyEl.hidden=Boolean(entries.length);
   }
 
-  // A core change-kezelő után olvassuk vissza az állapotot, így az akkori ár/mennyiség kerül a naplóba.
-  listRoot.addEventListener('change',event=>{
-    const checkbox=event.target.closest?.('.check');if(!checkbox)return;
-    const id=checkbox.closest('.item')?.dataset?.id;if(!id)return;
-    setTimeout(()=>{
-      if(checkbox.checked){
-        const item=load(STATE_KEY,[]).find(x=>String(x?.id)===String(id));if(item)recordItem(item);
-      }else removeItemEvent(id);
-      if(dialog.open)render();
-    },25);
-  });
+  openBtn.addEventListener('click',()=>{render();dialog.showModal()});closeBtn.addEventListener('click',()=>dialog.close());
+  dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close()});monthSelect.addEventListener('change',render);
+  listRoot.addEventListener('change',()=>{if(dialog.open)setTimeout(render,45)});
+  window.addEventListener('zoe-action-undone',()=>{if(dialog.open)setTimeout(render,30)});
+  window.addEventListener('zoe-receipt-imported',()=>{if(dialog.open)setTimeout(render,80)});
+  window.addEventListener('storage',event=>{if(dialog.open&&[HABITS_KEY,HISTORY_KEY,PRICE_MEMORY_KEY,LEARNED_KEY,STATE_KEY].includes(event.key))render()});
 
-  window.addEventListener('zoe-action-undone',event=>{
-    if(event.detail?.type==='check'&&event.detail?.id){removeItemEvent(event.detail.id);if(dialog.open)render()}
-  });
-  window.addEventListener('storage',event=>{if([LEDGER_KEY,FREQUENT_KEY].includes(event.key)&&dialog.open)render()});
-
-  openBtn.addEventListener('click',()=>{render();dialog.showModal()});
-  closeBtn.addEventListener('click',()=>dialog.close());
-  dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close()});
-  monthSelect.addEventListener('change',render);
-
-  window.ZoeShoppingStats2026={render,recordItem,removeItemEvent,ledger};
+  window.ZoeShoppingStats2026={render,events:allEvents};
 })();
