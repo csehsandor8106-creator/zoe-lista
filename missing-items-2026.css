@@ -1,4 +1,5 @@
 /* Zoé Lista – „Mi hiányozhat még?” intelligens listaellenőrzés. */
+.habit-suggestions.missing-check-superseded{display:none!important}
 .missing-items-check{
   display:grid;
   gap:7px;
