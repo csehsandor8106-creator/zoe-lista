@@ -139,6 +139,7 @@
       const ids=h.purchaseIds.slice(),idx=ids.indexOf(id);
       if(idx>=0){
         const purchases=Array.isArray(h.purchases)?h.purchases.slice():[];
+        const events=Array.isArray(h.purchaseEvents)?h.purchaseEvents.slice():[];
         const fromEnd=ids.length-1-idx;
         const purchaseIndex=purchases.length-1-fromEnd;
         ids.splice(idx,1);
@@ -146,6 +147,7 @@
         else if(purchases.length)purchases.pop();
         h.purchaseIds=ids;
         h.purchases=purchases;
+        h.purchaseEvents=events.filter(event=>String(event?.itemId||'')!==id);
         h.lastPurchase=purchases.length?Number(purchases[purchases.length-1])||0:0;
         habits[key]=h;
         save(HABITS_KEY,habits);
