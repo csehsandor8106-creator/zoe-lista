@@ -46,7 +46,12 @@
     {family:'vodka',aliases:['stolichnaya','stoli','stolichnaya vodka'],label:'Stolichnaya Vodka',category:'Szeszes italok',icon:'🍸',price:6499,unit:'üveg',legacyDbToDefault:true},
     {family:'vodka',aliases:['grey goose','grey goose vodka'],label:'Grey Goose Vodka',category:'Szeszes italok',icon:'🍸',price:14999,unit:'üveg',legacyDbToDefault:true},
     {family:'vodka',aliases:['belvedere','belvedere vodka'],label:'Belvedere Vodka',category:'Szeszes italok',icon:'🍸',price:13999,unit:'üveg',legacyDbToDefault:true},
-    {family:'vodka',aliases:['vodka','vódka','wodka'],label:'Vodka',category:'Szeszes italok',icon:'🍸',price:5499,unit:'üveg',legacyDbToDefault:true}
+    {family:'vodka',aliases:['vodka','vódka','wodka'],label:'Vodka',category:'Szeszes italok',icon:'🍸',price:5499,unit:'üveg',legacyDbToDefault:true},
+
+    // MÁK / DARÁLT MÁK – 200 g-os tipikus csomag
+    {family:'poppy',aliases:['mák','mak','étkezési mák','etkezesi mak','egész mák','egesz mak','mák 200 g','mak 200 g','étkezési mák 200 g','etkezesi mak 200 g'],label:'Mák',category:'Alapélelmiszer',icon:'🌱',price:495,unit:'csomag',legacyDbToDefault:true},
+    {family:'poppy',aliases:['darált mák','daralt mak','darált étkezési mák','daralt etkezesi mak','darált mák 200 g','daralt mak 200 g','sütésálló darált mák','sutesallo daralt mak','sütésálló darált étkezési mák','sutesallo daralt etkezesi mak'],label:'Darált mák',category:'Alapélelmiszer',icon:'🌱',price:495,unit:'csomag',legacyDbToDefault:true},
+    {family:'poppy',aliases:['cukrozott darált mák','cukrozott daralt mak','sütésálló cukrozott darált mák','sutesallo cukrozott daralt mak','cukrozott darált mák 200 g','cukrozott daralt mak 200 g'],label:'Cukrozott darált mák',category:'Alapélelmiszer',icon:'🌱',price:495,unit:'csomag',legacyDbToDefault:true}
   ];
 
   const normalize=value=>String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
@@ -69,14 +74,18 @@
   try{state=JSON.parse(localStorage.getItem(STATE_KEY))||[]}catch{state=[]}
   let changed=false;
   for(const item of state){
-    if(!item||item.source!=='estimate')continue;
+    if(!item)continue;
     const rule=exactRules[normalize(item.name)];if(!rule)continue;
+    const isPoppy=rule.family==='poppy';
+    const blankPoppy=isPoppy&&!Number(item.price);
+    if(item.source!=='estimate'&&!blankPoppy)continue;
     const oldUnit=item.unit||'db';
     if(item.name!==rule.label){item.name=rule.label;changed=true}
     if(item.category!==rule.category){item.category=rule.category;changed=true}
     if(item.icon!==rule.icon){item.icon=rule.icon;changed=true}
     if(rule.legacyDbToDefault&&oldUnit==='db'&&rule.unit!=='db'){item.unit=rule.unit;changed=true}
     if((item.unit||oldUnit)===rule.unit&&Number(item.price)!==Number(rule.price)){item.price=rule.price;changed=true}
+    if(blankPoppy&&item.source!=='estimate'){item.source='estimate';changed=true}
   }
   if(changed){try{localStorage.setItem(STATE_KEY,JSON.stringify(state))}catch{}}
 })();
