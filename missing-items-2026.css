@@ -90,6 +90,9 @@
   background:var(--card);
   color:var(--muted);
 }
+
+/* A többi felső javaslatsávval együtt tűnjön el kompakt görgetési módban. */
+body.ui-compact .missing-items-check{display:none!important}
 body.shopping-mode .missing-items-check{display:none!important}
 
 @media(max-width:520px){
