@@ -1,0 +1,52 @@
+/* Zoé Lista – saját múltból tanuló árfigyelő. */
+.price-watch{
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  margin:6px 0 0;
+  padding:8px 9px;
+  border:1px solid color-mix(in srgb,#f59e0b 38%,var(--line));
+  border-left:4px solid #f59e0b;
+  border-radius:12px;
+  background:color-mix(in srgb,var(--card) 94%,#fff7ed);
+  overflow-anchor:none;
+}
+.price-watch[hidden]{display:none!important}
+.price-watch-icon{
+  flex:0 0 auto;
+  width:28px;
+  height:28px;
+  display:grid;
+  place-items:center;
+  border-radius:9px;
+  background:color-mix(in srgb,#f59e0b 14%,var(--panel));
+  font-size:1rem;
+}
+.price-watch-copy{
+  min-width:0;
+  display:grid;
+  gap:2px;
+}
+.price-watch-copy strong{
+  font-size:.72rem;
+  line-height:1.2;
+  color:var(--text);
+}
+.price-watch-copy small{
+  font-size:.6rem;
+  line-height:1.28;
+  color:var(--muted);
+}
+.price-watch-edit{
+  margin-top:0;
+}
+body.shopping-mode .price-watch-live{
+  display:none!important;
+}
+
+@media(max-width:520px){
+  .price-watch{padding:7px 8px;gap:7px}
+  .price-watch-icon{width:27px;height:27px}
+  .price-watch-copy strong{font-size:.7rem}
+  .price-watch-copy small{font-size:.58rem}
+}
