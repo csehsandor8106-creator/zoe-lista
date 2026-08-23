@@ -130,16 +130,35 @@
     const icon = rule?.icon || '🛒';
     const label = rule?.label || typedName;
     const defaultUnit = rule?.unit || 'db';
-    const unit = quantity.unit || mem?.unit || defaultUnit;
+
+    // Az új bolti memória elsőbbséget élvez. Ha a store-modul már betöltődött,
+    // a régi globális sajátár-memóriát nem használjuk konkrét bolt áraként.
+    const storeLayer = window.ZoeStorePriceMemory2026 || null;
+    const targetUnit = quantity.unit || defaultUnit;
+    const storeMem = storeLayer?.preferredPrice?.(typedName,targetUnit)
+      || storeLayer?.preferredPrice?.(typedName,'')
+      || null;
+    const allowLegacyMemory = !storeLayer;
+
+    const unit = quantity.unit || storeMem?.unit || (allowLegacyMemory ? mem?.unit : null) || defaultUnit;
     const qty = Math.max(0.01, quantity.qty ?? 1);
-    const defaultPrice = Number(rule?.price ?? 699);
-    const price = Number(priced.price ?? mem?.price ?? defaultPrice);
-    const source = priced.price != null ? 'explicit' : mem ? 'memory' : 'estimate';
+    const mappedPrice = Number(rule?.pricesByUnit?.[unit]);
+    const defaultPrice = Number(Number.isFinite(mappedPrice) && mappedPrice > 0 ? mappedPrice : (rule?.price ?? 699));
+    const rememberedPrice = allowLegacyMemory ? mem?.price : null;
+    const price = Number(priced.price ?? storeMem?.price ?? rememberedPrice ?? defaultPrice);
+    const source = priced.price != null
+      ? 'explicit'
+      : storeMem
+        ? 'store-memory'
+        : allowLegacyMemory && mem
+          ? 'memory'
+          : 'estimate';
 
     return {
       typedName, label, category, icon, unit, qty, price,
       total:price * qty,
       source,
+      storeMem,
       recognized:!!rule,
       exact:!!hit?.exact
     };
@@ -164,9 +183,11 @@
 
     const priceLabel = p.source === 'explicit'
       ? 'saját ár'
-      : p.source === 'memory'
-        ? 'megjegyzett saját ár'
-        : '≈ becsült';
+      : p.source === 'store-memory'
+        ? `${p.storeMem?.storeLabel || 'bolti'} memória`
+        : p.source === 'memory'
+          ? 'megjegyzett saját ár'
+          : '≈ becsült';
     const stateLabel = p.recognized ? (p.exact ? 'felismerve' : 'felismerve a családból') : 'bizonytalan';
     const stateIcon = p.recognized ? '✓' : '?';
     const totalPart = p.qty !== 1 ? `<span class="preview-total">össz. ${money(p.total)}</span>` : '';
@@ -198,5 +219,6 @@
   input.addEventListener('focus', schedule);
   form.addEventListener('submit', () => setTimeout(render, 0));
   window.addEventListener('storage', schedule);
+  window.addEventListener('zoe-store-route-change',schedule);
   render();
 })();
