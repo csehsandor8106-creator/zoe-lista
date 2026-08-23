@@ -3,7 +3,8 @@
 
   // Zoé Lista – mini statisztika.
   // Vásárlási esemény: a szokásmemória valódi kipipálási időpontjai.
-  // Költés: az eseményhez időben legközelebbi ismert ár, ezért mindig becslésként jelenik meg.
+  // Költés: pontos vásárláskori mennyiség + akkori árpillanatkép, vagy az időben legközelebbi ismert ár.
+  // Régi eseménynél, ahol a korabeli mennyiség nem ismert, nem találunk ki összeget.
   const HABITS_KEY='zoe-lista-habits-v1';
   const HISTORY_KEY='zoe-lista-price-history-v1';
   const PRICE_MEMORY_KEY='zoe-lista-price-memory-v1';
@@ -35,11 +36,16 @@
   function nearestHistoryPrice(name,unit,at,history){
     const bucket=history[hKey(name,unit)];
     const entries=(bucket?.entries||[]).filter(e=>Number(e?.price)>0&&Number.isFinite(Number(e?.at)))
-      .map(e=>({price:Number(e.price),at:Number(e.at),source:e.source||'history'})).sort((a,b)=>a.at-b.at);
+      .map(e=>({price:Number(e.price),at:Number(e.at),source:e.source||'history'}));
     if(!entries.length)return null;
-    let before=null,after=null;
-    for(const entry of entries){if(entry.at<=at)before=entry;else{after=entry;break}}
-    const chosen=before||after;
+    const target=Number(at)||Date.now();
+    const chosen=entries.reduce((best,entry)=>{
+      if(!best)return entry;
+      const d=Math.abs(entry.at-target),bestD=Math.abs(best.at-target);
+      if(d<bestD)return entry;
+      if(d===bestD&&entry.at<=target&&best.at>target)return entry;
+      return best;
+    },null);
     return chosen?{...chosen,kind:'history'}:null;
   }
 
@@ -69,6 +75,19 @@
     return null;
   }
 
+  function snapshotFor(habit,at){
+    const events=Array.isArray(habit?.purchaseEvents)?habit.purchaseEvents:[];
+    const target=Number(at);
+    if(!Number.isFinite(target)||!events.length)return null;
+    const candidates=events.filter(event=>Number.isFinite(Number(event?.at)));
+    if(!candidates.length)return null;
+    const chosen=candidates.reduce((best,event)=>{
+      if(!best)return event;
+      return Math.abs(Number(event.at)-target)<Math.abs(Number(best.at)-target)?event:best;
+    },null);
+    return chosen&&Math.abs(Number(chosen.at)-target)<=2000?chosen:null;
+  }
+
   function allEvents(){
     const habits=load(HABITS_KEY,{}),data={
       history:load(HISTORY_KEY,{}),priceMemory:load(PRICE_MEMORY_KEY,{}),learned:load(LEARNED_KEY,{}),state:load(STATE_KEY,[])
@@ -78,12 +97,18 @@
     for(const habit of Object.values(habits||{})){
       if(!habit?.name)continue;
       const purchases=(Array.isArray(habit.purchases)?habit.purchases:[]).map(Number).filter(Number.isFinite);
-      const qty=Math.max(.01,Number(habit.qty)||1),unit=habit.unit||'db',rawName=String(habit.name),name=cleanName(rawName)||rawName;
+      const defaultUnit=habit.unit||'db',defaultRawName=String(habit.name);
       for(const at of purchases){
-        const price=priceFor(habit,at,data),total=price?.price>0?qty*Number(price.price):null;
+        const snap=snapshotFor(habit,at);
+        const rawName=String(snap?.name||defaultRawName),name=cleanName(rawName)||rawName;
+        const unit=snap?.unit||defaultUnit;
+        const qty=Number(snap?.qty)>0?Number(snap.qty):null;
+        const snapshotPrice=Number(snap?.price)>0?{price:Number(snap.price),kind:snap.priceSource==='user'?'purchase-user':'purchase-estimate',at:Number(snap.at)||at}:null;
+        const price=snapshotPrice||priceFor({...habit,name:rawName,unit},at,data);
+        const total=qty!=null&&price?.price>0?qty*Number(price.price):null;
         events.push({
-          at,name,rawName,pack:packLabel(rawName),icon:habit.icon||'🛒',category:habit.category||'Egyéb',qty,unit,
-          price:price?.price||null,total,priceKind:price?.kind||'missing'
+          at,name,rawName,pack:packLabel(rawName),icon:snap?.icon||habit.icon||'🛒',category:snap?.category||habit.category||'Egyéb',
+          qty,qtyKnown:qty!=null,unit,price:price?.price||null,total,priceKind:price?.kind||'missing'
         });
       }
     }
@@ -95,7 +120,7 @@
   const dialog=document.createElement('dialog');dialog.className='stats-dialog';dialog.innerHTML=`
     <div class="stats-shell">
       <div class="stats-head"><div><h2>📊 Mini statisztika</h2><p>A kipipált vásárlásokból és az ismert árakból számolva.</p></div><button type="button" class="icon-btn stats-close" aria-label="Bezárás">✕</button></div>
-      <div class="stats-period-row"><label>Hónap<select class="stats-month"></select></label><span class="stats-ledger-note">A költés becslés: az időben legközelebbi ismert árat használja.</span></div>
+      <div class="stats-period-row"><label>Hónap<select class="stats-month"></select></label><span class="stats-ledger-note">A költés becslés: vásárláskori mennyiség és árpillanatkép, vagy a legközelebbi ismert ár.</span></div>
       <section class="stats-cards">
         <article><span>≈ Havi költés</span><strong class="stats-spend">—</strong><small class="stats-spend-note"></small></article>
         <article><span>Vásárlási tételek</span><strong class="stats-count">0</strong><small>kipipált vásárlások</small></article>
@@ -136,21 +161,24 @@
 
   function render(){
     const events=allEvents();refreshMonthOptions(events);const entries=monthlyEvents(events),priced=entries.filter(e=>Number(e.total)>0),total=priced.reduce((sum,e)=>sum+Number(e.total),0),cats=categoryStats(entries),top=cats.find(x=>x.total>0)||cats[0];
+    const missingQty=entries.filter(e=>!e.qtyKnown).length;
     spendEl.textContent=priced.length?`≈ ${money(total)}`:'—';countEl.textContent=String(entries.length);
-    spendNote.textContent=entries.length?`${priced.length}/${entries.length} vásárláshoz van használható ár · ${entries.length?Math.round(priced.length/entries.length*100):0}% lefedettség`:'még nincs havi adat';
+    spendNote.textContent=entries.length
+      ? `${priced.length}/${entries.length} vásárláshoz van teljes ár+mennyiség adat · ${Math.round(priced.length/entries.length*100)}% lefedettség${missingQty?` · ${missingQty} régi eseménynél nincs korabeli mennyiség`:''}`
+      : 'még nincs havi adat';
     topCatEl.textContent=top?.name||'—';topCatValue.textContent=top?(top.total>0?`≈ ${money(top.total)}`:`${top.count} vásárlás`):'';
 
     const products=productStats(entries);productCaption.textContent=products.length?'kiválasztott hónap':'még nincs adat';productsEl.innerHTML='';
     for(const[index,item]of products.entries()){
       const row=document.createElement('div');row.className='stats-product-row';row.innerHTML=`<span class="stats-rank">${index+1}</span><span class="stats-product-icon">${item.icon||'🛒'}</span><strong></strong><b>${item.count}×</b>`;
-      row.querySelector('strong').textContent=`${item.name}${item.pack?` · ${item.pack}`:''}`;row.title=item.priced?`Becsült költés: ${money(item.total)}`:'Nincs hozzá használható áradat';productsEl.appendChild(row);
+      row.querySelector('strong').textContent=`${item.name}${item.pack?` · ${item.pack}`:''}`;row.title=item.priced?`Becsült költés: ${money(item.total)}`:'Nincs hozzá teljes ár+mennyiség adat';productsEl.appendChild(row);
     }
     if(!products.length)productsEl.innerHTML='<div class="stats-no-data">Ebben a hónapban még nincs vásárlási adat.</div>';
 
     categoriesEl.innerHTML='';const max=Math.max(1,...cats.map(x=>x.total));
     for(const item of cats.slice(0,8)){
       const pct=item.total>0?Math.max(3,Math.min(100,item.total/max*100)):2,row=document.createElement('div');row.className='stats-category-row';
-      row.innerHTML=`<div class="stats-category-line"><strong></strong><b>${item.total>0?`≈ ${money(item.total)}`:`${item.count}× · áradat nélkül`}</b></div><div class="stats-bar"><span style="width:${pct}%"></span></div>`;
+      row.innerHTML=`<div class="stats-category-line"><strong></strong><b>${item.total>0?`≈ ${money(item.total)}`:`${item.count}× · nincs teljes költési adat`}</b></div><div class="stats-bar"><span style="width:${pct}%"></span></div>`;
       row.querySelector('strong').textContent=item.name;categoriesEl.appendChild(row);
     }
     if(!cats.length)categoriesEl.innerHTML='<div class="stats-no-data">Ebben a hónapban még nincs kategóriánkénti adat.</div>';
