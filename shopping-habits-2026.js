@@ -131,9 +131,24 @@
     const purchases = Array.isArray(previous.purchases)
       ? previous.purchases.map(Number).filter(Number.isFinite).slice(-(MAX_PURCHASES-1))
       : [];
+    const purchaseEvents = Array.isArray(previous.purchaseEvents)
+      ? previous.purchaseEvents.filter(event => event && Number.isFinite(Number(event.at))).slice(-(MAX_PURCHASES-1))
+      : [];
 
     const now = Date.now();
+    const qty = Number(item.qty) > 0 ? Number(item.qty) : (Number(previous.qty) || 1);
     purchases.push(now);
+    purchaseEvents.push({
+      itemId:id,
+      at:now,
+      qty,
+      unit:item.unit || previous.unit || 'db',
+      price:Number(item.price) > 0 ? Number(item.price) : null,
+      priceSource:item.source || 'estimate',
+      name:item.name,
+      icon:item.icon || previous.icon || '🛒',
+      category:item.category || previous.category || 'Egyéb'
+    });
     if (id) ids.push(id);
 
     habits[key] = {
@@ -142,8 +157,9 @@
       icon:item.icon || previous.icon || '🛒',
       category:item.category || previous.category || 'Egyéb',
       unit:item.unit || previous.unit || 'db',
-      qty:Number(item.qty) > 0 ? Number(item.qty) : (Number(previous.qty) || 1),
+      qty,
       purchases:purchases.slice(-MAX_PURCHASES),
+      purchaseEvents:purchaseEvents.slice(-MAX_PURCHASES),
       purchaseIds:ids.slice(-32),
       lastPurchase:now
     };
