@@ -3,6 +3,7 @@
 .qr-share-card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:16px;box-shadow:0 24px 70px rgba(0,0,0,.42);display:grid;gap:14px}
 .qr-share-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .qr-share-head h2{margin:0;font-size:1.18rem}.qr-share-head p{margin:3px 0 0;color:var(--muted);font-size:.8rem}
+.qr-send-view[hidden],.qr-scan-view[hidden],.qr-import-view[hidden]{display:none!important}
 .qr-box{display:grid;place-items:center;min-height:220px;border-radius:18px;background:#fff;padding:12px;overflow:auto}
 .qr-box svg{display:block;width:min(100%,460px);height:auto;max-height:62vh}
 .qr-empty{color:#38403f;text-align:center;padding:24px;max-width:340px;font-weight:750}
