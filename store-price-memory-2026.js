@@ -24,6 +24,8 @@
   const editForm = document.getElementById('editForm');
   const editId = document.getElementById('editId');
   const editPrice = document.getElementById('editPrice');
+  const totalText = document.getElementById('totalText');
+  const countText = document.getElementById('countText');
   if (!form || !input || !listRoot || !editForm || !editId || !editPrice) return;
 
   function load(key, fallback) {
@@ -42,6 +44,10 @@
       .replace(/[\u0300-\u036f]/g,'')
       .replace(/[^a-z0-9]+/g,' ')
       .trim();
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   }
 
   function historyKey(name, unit) {
@@ -82,6 +88,15 @@
     return `${info.icon} ${info.name}`;
   }
 
+  function storeLocative(storeId, fallbackName='bolt') {
+    if (storeId==='aldi') return 'az Aldiban';
+    if (storeId==='lidl') return 'a Lidlben';
+    if (storeId==='tesco') return 'a Tescóban';
+    if (storeId==='spar') return 'a SPAR-ban';
+    if (storeId==='general') return 'az Általános boltban';
+    return `ebben a boltban: ${fallbackName}`;
+  }
+
   function loadStoreHistory() {
     return load(STORE_HISTORY_KEY, {});
   }
@@ -103,13 +118,12 @@
     return best;
   }
 
-  function estimateFor(name, unit, fallbackPrice) {
+  function estimateFor(name, unit) {
     const rule = safeRule(name);
     const mapped = Number(rule?.pricesByUnit?.[unit]);
     if (Number.isFinite(mapped) && mapped > 0) return mapped;
     if (rule?.unit === unit && Number(rule?.price) > 0) return Number(rule.price);
-    const p = Number(fallbackPrice);
-    return Number.isFinite(p) && p > 0 ? p : 699;
+    return null;
   }
 
   function record(name, unit, price, source='manual', timestamp=Date.now(), storeId=activeStoreId()) {
@@ -305,16 +319,35 @@
     if (!item) return;
     const row = listRoot.querySelector(`.item[data-id="${CSS.escape(String(item.id))}"]`);
     if (!row) return;
+    const unknown = item.price==null || item.source==='unknown';
     const badge = row.querySelector('.pill.user,.pill.estimate');
     if (badge) {
-      badge.textContent = item.source==='user' ? 'saját ár' : '≈ becsült';
-      badge.classList.toggle('user',item.source==='user');
-      badge.classList.toggle('estimate',item.source!=='user');
+      badge.textContent = unknown ? 'ár nélkül' : item.source==='user' ? 'saját ár' : '≈ becsült';
+      badge.classList.toggle('user',!unknown && item.source==='user');
+      badge.classList.toggle('estimate',unknown || item.source!=='user');
     }
     const priceLine = row.querySelector('.price-line');
     if (priceLine) {
-      const qty=Number(item.qty)||1;
-      priceLine.innerHTML = `${money((Number(item.price)||0)*qty)} <span class="unit">(${money(item.price)}/${String(item.unit||'db')})</span>`;
+      if (unknown) priceLine.innerHTML = '— <span class="unit">(ár megadása a ✎ gombbal)</span>';
+      else {
+        const qty=Number(item.qty)||1;
+        priceLine.innerHTML = `${money((Number(item.price)||0)*qty)} <span class="unit">(${money(item.price)}/${escapeHtml(item.unit||'db')})</span>`;
+      }
+    }
+  }
+
+  function refreshSummary(items=load(STATE_KEY,[])) {
+    if (!totalText) return;
+    const unknown = items.filter(i=>i?.price==null || i?.source==='unknown');
+    const estimated = items.filter(i=>i?.source==='estimate' || i?.source==='estimate-unit');
+    const sum = items.reduce((acc,item)=>{
+      const price=Number(item?.price),qty=Number(item?.qty)||0;
+      return acc + (Number.isFinite(price)?price*qty:0);
+    },0);
+    totalText.textContent = unknown.length ? `≈ ${money(sum)} + ?` : `${estimated.length?'≈ ':''}${money(sum)}`;
+    if (countText) {
+      countText.textContent = countText.textContent.replace(/\s*•\s*\d+\s+ár nélkül/g,'');
+      if (unknown.length) countText.textContent += ` • ${unknown.length} ár nélkül`;
     }
   }
 
@@ -325,6 +358,52 @@
     items[index] = item;
     save(STATE_KEY,items);
     syncRow(item);
+    refreshSummary(items);
+  }
+
+  function applyActiveStorePrices() {
+    const storeId = activeStoreId();
+    const items = load(STATE_KEY,[]);
+    let changed = false;
+    const changedItems = [];
+
+    for (const item of items) {
+      if (!item?.name || !item.unit) continue;
+      const remembered = preferredPrice(item.name,item.unit);
+      if (remembered) {
+        if (Number(item.price)!==Number(remembered.price) || item.source!=='user' || item.priceStore!==storeId) {
+          item.price = Number(remembered.price);
+          item.source = 'user';
+          item.priceStore = storeId;
+          item.priceStoreMemory = true;
+          changed = true;
+          changedItems.push(item);
+        }
+        continue;
+      }
+
+      if (storeId!=='general' && item.priceStore && item.priceStore!==storeId) {
+        const estimate = estimateFor(item.name,item.unit);
+        if (estimate!=null) {
+          item.price = estimate;
+          item.source = 'estimate';
+        } else {
+          item.price = null;
+          item.source = 'unknown';
+        }
+        delete item.priceStore;
+        delete item.priceStoreMemory;
+        changed = true;
+        changedItems.push(item);
+      }
+    }
+
+    if (changed) {
+      save(STATE_KEY,items);
+      for (const item of changedItems) syncRow(item);
+      refreshSummary(items);
+    }
+    return changed;
   }
 
   // A store-modul szándékosan a meglévő globális price-history listener UTÁN töltődik.
@@ -360,11 +439,16 @@
         return;
       }
 
-      // Ha konkrét boltban nincs még saját ár, egy korábbi másik bolt globális memóriája
-      // ne legyen tévesen saját árként feltüntetve. Ilyenkor visszaállunk becslésre.
-      if (storeId!=='general' && item.source==='user' && !item.priceStore) {
-        item.price = estimateFor(item.name,item.unit,item.price);
-        item.source = 'estimate';
+      // Konkrét boltban egy másik üzlet globális saját ára ne szivárogjon át.
+      if (storeId!=='general' && item.source==='user' && item.priceStore!==storeId) {
+        const estimate = estimateFor(item.name,item.unit);
+        if (estimate!=null) {
+          item.price = estimate;
+          item.source = 'estimate';
+        } else {
+          item.price = null;
+          item.source = 'unknown';
+        }
         delete item.priceStore;
         delete item.priceStoreMemory;
         saveTaggedItem(item);
@@ -422,31 +506,31 @@
       const second = comparison.qualified[1];
       const gap = second?.typical ? (second.typical-best.typical)/second.typical : 0;
       verdict = gap < 0.02
-        ? `A te adataid alapján a két legjobb bolt ára eddig nagyon közel van egymáshoz.`
-        : `A te adataid alapján ezt általában a ${best.storeName} üzletben vetted olcsóbban.`;
+        ? 'A te adataid alapján a két legjobb bolt ára eddig nagyon közel van egymáshoz.'
+        : `A te adataid alapján ezt általában ${storeLocative(best.storeId,best.storeName)} vetted olcsóbban.`;
     } else if (rows.length>=2) {
       verdict = 'Már több boltból van adat, de a biztos összehasonlításhoz még legalább 2-2 saját ár kell.';
     } else if (rows.length===1) {
       verdict = 'Ha ugyanennek a terméknek másik boltban is megadsz árat, Zoé össze tudja majd hasonlítani.';
     } else {
-      verdict = `Még nincs bolthoz kötött saját ár ehhez a termékhez.`;
+      verdict = 'Még nincs bolthoz kötött saját ár ehhez a termékhez.';
     }
 
     panel.hidden=false;
     panel.innerHTML = `
       <div class="store-price-title">
         <span>🏪 Bolt szerinti árak</span>
-        <small>Aktív: ${currentInfo.icon} ${currentInfo.name}</small>
+        <small>Aktív: ${escapeHtml(currentInfo.icon)} ${escapeHtml(currentInfo.name)}</small>
       </div>
       ${currentStats ? `<div class="store-price-current"><span>Ebben a boltban legutóbb</span><strong>${money(currentStats.last.price)}</strong><small>${dateText(currentStats.last.at)} · ${currentStats.count} adat</small></div>` : `<div class="store-price-current is-empty"><span>Ebben a boltban még nincs saját árad</span><small>Adj meg egy árat, és Zoé ide menti.</small></div>`}
       ${rows.length ? `<div class="store-price-rows">${rows.map(s=>`
         <div class="store-price-row ${s.storeId===currentId?'is-current':''}">
-          <span class="store-price-name">${s.storeIcon || '🏪'} ${s.storeName}</span>
+          <span class="store-price-name">${escapeHtml(s.storeIcon || '🏪')} ${escapeHtml(s.storeName)}</span>
           <span><small>jellemző</small><strong>${money(s.typical)}</strong></span>
           <span><small>legutóbbi</small><strong>${money(s.last.price)}</strong></span>
           <em>${s.count}×</em>
         </div>`).join('')}</div>` : ''}
-      <div class="store-price-verdict">💡 ${verdict}</div>`;
+      <div class="store-price-verdict">💡 ${escapeHtml(verdict)}</div>`;
   }
 
   listRoot.addEventListener('click',event=>{
@@ -455,11 +539,15 @@
   });
 
   window.addEventListener('zoe-store-route-change',()=>{
+    applyActiveStorePrices();
     renderPanel();
     input.dispatchEvent(new Event('input',{bubbles:true}));
   });
   window.addEventListener('storage',event=>{
-    if ([STORE_HISTORY_KEY,ACTIVE_STORE_KEY,PROFILES_KEY,STATE_KEY].includes(event.key)) renderPanel();
+    if ([STORE_HISTORY_KEY,ACTIVE_STORE_KEY,PROFILES_KEY,STATE_KEY].includes(event.key)) {
+      if (event.key===ACTIVE_STORE_KEY) applyActiveStorePrices();
+      renderPanel();
+    }
   });
 
   window.ZoeStorePriceMemory2026 = {
@@ -469,6 +557,9 @@
     preferredPrice,
     comparisonFor,
     record,
+    applyActiveStorePrices,
     render:renderPanel
   };
+
+  window.setTimeout(applyActiveStorePrices,0);
 })();
