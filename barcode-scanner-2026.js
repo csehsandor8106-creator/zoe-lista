@@ -3,17 +3,23 @@
 
   // Zoé Lista – kamerás EAN/UPC vonalkódolvasó.
   // Felismerési sorrend:
-  // 1) helyi Zoé vonalkód-memória
-  // 2) Open Food Facts + testvéradatbázisok (product_type=all)
-  // 3) kézi tanítás, ha egyik sem találja
+  // 1) helyi Zoé vonalkód-memória / beépített biztos találatok
+  // 2) gyors Open Food Facts v2 élelmiszer-keresés
+  // 3) univerzális Open Facts v3 keresés (food / beauty / petfood / product)
+  // 4) kézi tanítás, ha egyik sem találja
   const MEMORY_KEY = 'zoe-lista-barcode-memory-v1';
-  const OPEN_FACTS_API = 'https://world.openfoodfacts.org/api/v3/product/';
+  const LEARNED_KEY = 'zoe-lista-learned-v1';
+  const OPEN_FOOD_V2_API = 'https://world.openfoodfacts.org/api/v2/product/';
+  const OPEN_FACTS_V3_API = 'https://world.openfoodfacts.org/api/v3/product/';
   const OPEN_FACTS_FIELDS = [
     'code','product_type','product_name','product_name_hu','abbreviated_product_name',
     'abbreviated_product_name_hu','generic_name','generic_name_hu','brands','quantity',
     'product_quantity','product_quantity_unit','categories','categories_tags'
   ].join(',');
-  const LOOKUP_TIMEOUT_MS = 7000;
+  const FOOD_TIMEOUT_MS = 3200;
+  const ALL_TIMEOUT_MS = 4500;
+  const ONLINE_RULE_VERSION = 20260823;
+
   const SOURCE_LABELS = {
     food:'Open Food Facts',
     beauty:'Open Beauty Facts',
@@ -21,23 +27,46 @@
     product:'Open Products Facts'
   };
 
+  // Biztos helyi találatok. Ezeket első használatkor a normál helyi memóriába is átmásoljuk.
+  const BUILTIN_BARCODES = {
+    '5051007103305': {
+      name:'Tesco szódabikarbóna',
+      source:'builtin',
+      sourceName:'Zoé beépített katalógus',
+      productType:'food',
+      brand:'Tesco',
+      quantity:'100 g',
+      categories:'szódabikarbóna'
+    }
+  };
+
   const form = document.getElementById('addForm');
   const input = document.getElementById('itemInput');
   const addButton = form?.querySelector('.add-btn');
   if (!form || !input || !addButton) return;
 
-  function loadMemory() {
-    try { return JSON.parse(localStorage.getItem(MEMORY_KEY)) || {}; }
-    catch { return {}; }
+  function loadJson(key, fallback = {}) {
+    try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
+    catch { return fallback; }
   }
-  function saveMemory(memory) {
-    try { localStorage.setItem(MEMORY_KEY, JSON.stringify(memory)); } catch {}
+  function saveJson(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
   }
+  function loadMemory() { return loadJson(MEMORY_KEY, {}); }
+  function saveMemory(memory) { saveJson(MEMORY_KEY, memory); }
   function cleanCode(value) {
     return String(value || '').replace(/\s+/g, '').trim();
   }
   function cleanText(value) {
     return String(value || '').replace(/\s+/g, ' ').trim();
+  }
+  function normalizeText(value) {
+    return String(value || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
   }
   function validGtin(value) {
     const code = String(value || '');
@@ -82,6 +111,23 @@
   }
   function sourceLabel(productType) {
     return SOURCE_LABELS[productType] || 'Open Food Facts';
+  }
+  function resultFromProduct(product, forcedType = '', forcedSource = '') {
+    if (!product || typeof product !== 'object') return {found:false, reason:'not-found'};
+    const label = productLabel(product);
+    if (!label) {
+      return {found:false, reason:'no-name', suggestedName:firstText(product?.brands)};
+    }
+    const productType = cleanText(forcedType || product?.product_type || 'food');
+    return {
+      found:true,
+      label,
+      productType,
+      brand:firstText(product?.brands),
+      quantity:firstText(product?.quantity),
+      categories:firstText(product?.categories),
+      source:forcedSource || sourceLabel(productType)
+    };
   }
 
   const scanButton = document.createElement('button');
@@ -206,7 +252,7 @@
 
   function knownProduct(code) {
     const memory = loadMemory();
-    return memory[code] || null;
+    return memory[code] || BUILTIN_BARCODES[code] || null;
   }
 
   function rememberBarcode(code, name, meta = {}) {
@@ -225,12 +271,41 @@
 
   function touchKnown(code, entry) {
     const memory = loadMemory();
+    const prev = memory[code] || {};
     memory[code] = {
       ...entry,
+      learnedAt:prev.learnedAt || entry.learnedAt || Date.now(),
       lastUsed:Date.now(),
-      scans:(Number(entry.scans) || 0) + 1
+      scans:(Number(prev.scans ?? entry.scans) || 0) + 1
     };
     saveMemory(memory);
+  }
+
+  // Ha az online adatbázis hosszú, részletes nevet ad, a családfelismerésből
+  // azonnal készítünk pontos szabályt. Így már az ELSŐ scanneres hozzáadás is jó kategóriába kerül.
+  function teachRecognition(label, categories = '') {
+    const matcher = window.ZoeExtraFamily2026?.match;
+    if (typeof matcher !== 'function') return;
+    const hint = matcher(`${label} ${categories}`);
+    if (!hint) return;
+
+    const key = normalizeText(label);
+    if (!key) return;
+    const learned = loadJson(LEARNED_KEY, {});
+    const previous = learned[key];
+    if (previous && !previous.builtinCatalog && !previous.onlineCatalog) return;
+
+    learned[key] = {
+      ...hint,
+      label,
+      kind:'learned',
+      builtinCatalog:true,
+      familyCatalog:true,
+      onlineCatalog:true,
+      family:'online-barcode-hint',
+      builtinVersion:ONLINE_RULE_VERSION
+    };
+    saveJson(LEARNED_KEY, learned);
   }
 
   function showTeach(code, message = 'Ezt a kódot még nem ismerem. Tanítsd meg egyszer. 🙂', suggestedName = '') {
@@ -246,59 +321,84 @@
     setTimeout(() => productName.focus({preventScroll:true}), 30);
   }
 
-  async function lookupOpenFacts(code) {
+  async function fetchJson(url, timeoutMs) {
     cancelLookup();
     const controller = new AbortController();
     lookupController = controller;
-    const timeout = setTimeout(() => controller.abort(), LOOKUP_TIMEOUT_MS);
-    const params = new URLSearchParams({
-      product_type:'all',
-      cc:'hu',
-      lc:'hu',
-      fields:OPEN_FACTS_FIELDS
-    });
-
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
     try {
-      const response = await fetch(`${OPEN_FACTS_API}${encodeURIComponent(code)}?${params.toString()}`, {
+      const response = await fetch(url, {
         method:'GET',
         mode:'cors',
         cache:'no-store',
         headers:{Accept:'application/json'},
         signal:controller.signal
       });
-
-      if (response.status === 404) return {found:false, reason:'not-found'};
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-      const json = await response.json();
-      const product = json?.product && typeof json.product === 'object' ? json.product : null;
-      if (!product) return {found:false, reason:'not-found'};
-
-      const label = productLabel(product);
-      if (!label) {
-        return {
-          found:false,
-          reason:'no-name',
-          suggestedName:firstText(product?.brands)
-        };
+      if (!response.ok) {
+        return {ok:false, reason:response.status === 404 ? 'not-found' : 'network', status:response.status};
       }
-
-      return {
-        found:true,
-        label,
-        productType:cleanText(product?.product_type),
-        brand:firstText(product?.brands),
-        quantity:firstText(product?.quantity),
-        categories:firstText(product?.categories),
-        source:sourceLabel(cleanText(product?.product_type))
-      };
+      return {ok:true, json:await response.json()};
     } catch (error) {
-      if (error?.name === 'AbortError') return {found:false, reason:'timeout'};
-      return {found:false, reason:'network'};
+      return {ok:false, reason:error?.name === 'AbortError' ? 'timeout' : 'network'};
     } finally {
       clearTimeout(timeout);
       if (lookupController === controller) lookupController = null;
     }
+  }
+
+  async function lookupFoodV2(code) {
+    const params = new URLSearchParams({
+      fields:OPEN_FACTS_FIELDS,
+      cc:'hu',
+      lc:'hu'
+    });
+    const request = await fetchJson(
+      `${OPEN_FOOD_V2_API}${encodeURIComponent(code)}.json?${params.toString()}`,
+      FOOD_TIMEOUT_MS
+    );
+    if (!request.ok) return {found:false, reason:request.reason};
+
+    const json = request.json || {};
+    if (Number(json.status) === 0 || !json.product) return {found:false, reason:'not-found'};
+    return resultFromProduct(json.product, 'food', 'Open Food Facts');
+  }
+
+  async function lookupAllV3(code) {
+    const params = new URLSearchParams({
+      product_type:'all',
+      cc:'hu',
+      lc:'hu',
+      fields:OPEN_FACTS_FIELDS
+    });
+    const request = await fetchJson(
+      `${OPEN_FACTS_V3_API}${encodeURIComponent(code)}?${params.toString()}`,
+      ALL_TIMEOUT_MS
+    );
+    if (!request.ok) return {found:false, reason:request.reason};
+
+    const product = request.json?.product && typeof request.json.product === 'object'
+      ? request.json.product
+      : null;
+    return resultFromProduct(product);
+  }
+
+  async function lookupOpenFacts(code) {
+    if (navigator.onLine === false) return {found:false, reason:'network'};
+
+    setStatus('🔎 Gyors keresés az Open Food Factsban…', 'reading');
+    const food = await lookupFoodV2(code);
+    if (food.found || food.reason === 'no-name') return food;
+
+    if (!dialog.open || pendingCode !== code) return {found:false, reason:'cancelled'};
+    setStatus('🔎 Más termékadatbázisokban is keresek…', 'reading');
+    const all = await lookupAllV3(code);
+    if (all.found || all.reason === 'no-name') return all;
+
+    // Ha legalább az egyik keresés szabályosan lefutott és csak nem talált semmit,
+    // ne nevezzük hálózati hibának. Timeout csak akkor legyen, ha nem kaptunk valódi választ.
+    if (food.reason === 'not-found' || all.reason === 'not-found') return {found:false, reason:'not-found'};
+    if (food.reason === 'timeout' || all.reason === 'timeout') return {found:false, reason:'timeout'};
+    return {found:false, reason:'network'};
   }
 
   async function acceptCode(rawValue, format = '') {
@@ -315,6 +415,7 @@
     if (entry?.name) {
       stopCamera();
       touchKnown(code, entry);
+      teachRecognition(entry.name, entry.categories || '');
       const from = entry.sourceName ? ` · ${entry.sourceName}` : '';
       setStatus(`✓ Felismerve: ${entry.name}${from}`, 'success');
       setTimeout(() => {
@@ -331,7 +432,7 @@
     setStatus('🔎 Keresem a nyilvános termékadatbázisban…', 'reading');
 
     const result = await lookupOpenFacts(code);
-    if (!dialog.open || pendingCode !== code) return;
+    if (!dialog.open || pendingCode !== code || result.reason === 'cancelled') return;
 
     if (result.found) {
       rememberBarcode(code, result.label, {
@@ -342,6 +443,7 @@
         quantity:result.quantity,
         categories:result.categories
       });
+      teachRecognition(result.label, result.categories || '');
       pendingCode = '';
       const qty = result.quantity ? ` · ${result.quantity}` : '';
       setStatus(`✓ ${result.label}${qty} · ${result.source}`, 'success');
@@ -353,7 +455,7 @@
     }
 
     if (result.reason === 'timeout') {
-      showTeach(code, 'Az online keresés most túl sokáig tartott. Megtaníthatod kézzel, és Zoé megjegyzi.');
+      showTeach(code, 'Az online adatbázis most lassan válaszol. Megtaníthatod kézzel, és Zoé megjegyzi.');
     } else if (result.reason === 'network') {
       showTeach(code, 'Most nem érem el az online termékadatbázist. Offline is megtaníthatod ezt a kódot.');
     } else if (result.reason === 'no-name') {
@@ -490,6 +592,7 @@
     if (!pendingCode || !name) return;
     const price = moneyInput(productPrice.value);
     rememberBarcode(pendingCode, name, {source:'user', sourceName:'Saját tanítás'});
+    teachRecognition(name);
     setStatus(`✓ Megjegyeztem: ${name}`, 'success');
     const code = pendingCode;
     pendingCode = '';
