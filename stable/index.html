@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0f766e" />
+  <meta name="description" content="Zoé Lista – okos, offline használható bevásárlólista." />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="list-layout-2026.css" />
+  <link rel="stylesheet" href="store-profiles-2026.css" />
+  <link rel="stylesheet" href="ui-polish-2026.css" />
+  <link rel="stylesheet" href="input-preview-2026.css" />
+  <link rel="stylesheet" href="frequent-items-2026.css" />
+  <link rel="stylesheet" href="shopping-habits-2026.css" />
+  <link rel="stylesheet" href="missing-items-2026.css" />
+  <link rel="stylesheet" href="price-history-2026.css" />
+  <link rel="stylesheet" href="store-price-memory-2026.css" />
+  <link rel="stylesheet" href="price-watch-2026.css" />
+  <link rel="stylesheet" href="pack-size-2026.css" />
+  <link rel="stylesheet" href="barcode-scanner-2026.css" />
+  <link rel="stylesheet" href="qr-share-2026.css" />
+  <link rel="stylesheet" href="voice-input-2026.css" />
+  <link rel="stylesheet" href="shopping-mode-2026.css" />
+  <link rel="stylesheet" href="list-templates-2026.css" />
+  <link rel="stylesheet" href="receipt-import-2026.css" />
+  <link rel="stylesheet" href="cloud-sync-2026.css" />
+  <link rel="stylesheet" href="undo-actions-2026.css" />
+  <link rel="stylesheet" href="list-search-2026.css" />
+  <link rel="stylesheet" href="shopping-stats-2026.css" />
+  <title>Zoé Lista</title>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <h1>Zoé Lista</h1>
+        <p class="subtitle">Gyors, okos bevásárlólista</p>
+      </div>
+      <button id="themeBtn" class="icon-btn" type="button" aria-label="Téma váltása">◐</button>
+    </header>
+
+    <section class="composer" aria-label="Új termék hozzáadása">
+      <form id="addForm" autocomplete="off">
+        <label class="sr-only" for="itemInput">Termék</label>
+        <input id="itemInput" inputmode="text" placeholder="pl. 1 kg marhahús • Chio • 2 tej • Milka 599 Ft" />
+        <button class="add-btn" type="submit">Hozzáadás</button>
+      </form>
+      <div class="quick-help">Mennyiség jöhet előre vagy hátra. Saját ár: <b>Milka 599 Ft</b>.</div>
+    </section>
+
+    <section class="toolbar" aria-label="Lista műveletek">
+      <button id="hideDoneBtn" class="soft-btn" type="button">✓ Kipipáltak elrejtése</button>
+      <button id="clearDoneBtn" class="soft-btn" type="button">Kipipáltak törlése</button>
+    </section>
+
+    <section id="listRoot" class="list-root" aria-live="polite"></section>
+
+    <footer class="summary">
+      <div>
+        <div id="countText" class="summary-small">0 tétel</div>
+        <div id="estimateText" class="summary-note">A becsült árak tájékoztató jellegűek.</div>
+      </div>
+      <div id="totalText" class="summary-total">0 Ft</div>
+    </footer>
+  </main>
+
+  <dialog id="editDialog">
+    <form id="editForm" method="dialog" class="edit-card">
+      <div class="dialog-head">
+        <h2>Tétel szerkesztése</h2>
+        <button id="closeEditBtn" class="icon-btn" type="button" aria-label="Bezárás">✕</button>
+      </div>
+      <input type="hidden" id="editId" />
+      <label>Név<input id="editName" /></label>
+      <label>Kategória<select id="editCategory"></select></label>
+      <label>Ikon<input id="editIcon" maxlength="4" /></label>
+      <label>Egység<select id="editUnit"><option>db</option><option>pár</option><option>kg</option><option>l</option><option>csomag</option><option>doboz</option><option>üveg</option></select></label>
+      <label>Egységár (Ft)<input id="editPrice" type="number" min="0" step="1" inputmode="numeric" placeholder="Ár megadása" /></label>
+      <label class="remember-row"><input id="learnRule" type="checkbox" checked /> Ezt a felismerést jegyezze meg</label>
+      <div class="dialog-actions">
+        <button id="cancelEditBtn" class="soft-btn" type="button">Mégse</button>
+        <button class="add-btn" type="submit">Mentés</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="catalog-data.js" defer></script>
+  <script src="market-catalog-2026.js" defer></script>
+  <script src="family-catalog-2026.js" defer></script>
+  <script src="family-grains-2026.js" defer></script>
+  <script src="family-cleaning-2026.js" defer></script>
+  <script src="family-home-tech-hygiene-2026.js" defer></script>
+  <script src="family-mobile-charging-paint-2026.js" defer></script>
+  <script src="family-reading-media-optics-2026.js" defer></script>
+  <script src="family-kitchen-baking-textile-2026.js" defer></script>
+  <script src="family-kitchenware-hydration-2026.js" defer></script>
+  <script src="family-meat-2026.js" defer></script>
+  <script src="family-pork-biscuits-bars-2026.js" defer></script>
+  <script src="family-coffee-vinegar-sweet-bakery-2026.js" defer></script>
+  <script src="family-stationery-rain-footwear-2026.js" defer></script>
+  <script src="family-pantry-bakery-gifts-2026.js" defer></script>
+  <script src="family-paper-insect-2026.js" defer></script>
+  <script src="family-spices-baking-paper-2026.js" defer></script>
+  <script src="family-garden-beauty-2026.js" defer></script>
+  <script src="family-seeds-produce-2026.js" defer></script>
+  <script src="family-fashion-accessories-2026.js" defer></script>
+  <script src="family-dairy-desserts-candy-2026.js" defer></script>
+  <script src="family-pasta-baby-2026.js" defer></script>
+  <script src="family-shopping-gaps-2026.js" defer></script>
+  <script src="family-shopping-gaps-2-2026.js" defer></script>
+  <script src="catalog-patches.js" defer></script>
+  <script src="produce-unit-overrides-2026.js" defer></script>
+  <script src="catalog-stabilizer.js" defer></script>
+  <script src="input-normalizer.js" defer></script>
+  <script src="app.js" defer></script>
+  <script src="unit-price-fixer.js" defer></script>
+  <script src="price-policy.js" defer></script>
+  <script src="list-layout-2026.js" defer></script>
+  <script src="store-profiles-2026.js" defer></script>
+  <script src="ui-polish-2026.js" defer></script>
+  <script src="input-preview-2026.js" defer></script>
+  <script src="frequent-items-2026.js" defer></script>
+  <script src="shopping-habits-2026.js" defer></script>
+  <script src="missing-items-2026.js" defer></script>
+  <script src="price-history-2026.js" defer></script>
+  <script src="pack-size-2026.js" defer></script>
+  <script src="store-price-memory-2026.js" defer></script>
+  <script src="price-watch-2026.js" defer></script>
+  <script src="barcode-scanner-2026.js" defer></script>
+  <script src="voice-input-2026.js" defer></script>
+  <script src="qr-local-2026.js" defer></script>
+  <script src="qr-share-2026.js" defer></script>
+  <script src="shopping-mode-2026.js" defer></script>
+  <script src="list-templates-2026.js" defer></script>
+  <script src="receipt-import-2026.js" defer></script>
+  <script src="cloud-sync-2026.js" defer></script>
+  <script src="undo-actions-2026.js" defer></script>
+  <script src="list-search-2026.js" defer></script>
+  <script src="shopping-stats-2026.js" defer></script>
+</body>
+</html>

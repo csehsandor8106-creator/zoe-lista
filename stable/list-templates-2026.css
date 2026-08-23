@@ -1,0 +1,148 @@
+/* Zoé Lista – ismétlődő listák / sablonok */
+.template-open-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
+.template-dialog{
+  width:min(94vw,620px);
+  max-height:min(88vh,820px);
+  padding:0;
+  border:0;
+  border-radius:20px;
+  background:transparent;
+  color:var(--text);
+}
+.template-dialog::backdrop{background:rgba(15,23,42,.48);backdrop-filter:blur(2px)}
+.template-card-shell{
+  display:grid;
+  gap:12px;
+  padding:16px;
+  border:1px solid var(--line);
+  border-radius:20px;
+  background:var(--card);
+  box-shadow:0 24px 70px rgba(15,23,42,.24);
+}
+.template-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+}
+.template-head h2{margin:0;font-size:1.05rem}
+.template-head p{margin:3px 0 0;color:var(--muted);font-size:.69rem;line-height:1.35}
+.template-save-box{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:8px;
+  padding:10px;
+  border:1px solid color-mix(in srgb,var(--accent) 22%,var(--line));
+  border-radius:14px;
+  background:color-mix(in srgb,var(--panel) 94%,var(--accent2));
+}
+.template-save-box > label:first-child{display:grid;gap:4px}
+.template-save-box > label:first-child > span{font-size:.62rem;font-weight:800;color:var(--muted)}
+.template-save-box input[type="text"],
+.template-save-box input[list]{
+  min-height:40px;
+  width:100%;
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:0 10px;
+  background:var(--card);
+  color:var(--text);
+  font:inherit;
+}
+.template-store-check{
+  grid-column:1 / -1;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  color:var(--muted);
+  font-size:.63rem;
+}
+.template-store-check input{width:17px;height:17px}
+.template-save-btn{align-self:end;min-height:40px;padding-inline:12px}
+.template-status{
+  min-height:1.1em;
+  color:var(--muted);
+  font-size:.64rem;
+  font-weight:750;
+}
+.template-status[data-tone="ok"]{color:var(--accent)}
+.template-status[data-tone="warn"]{color:#b45309}
+.template-list{
+  display:grid;
+  gap:8px;
+  overflow:auto;
+  max-height:min(52vh,470px);
+  padding-right:2px;
+}
+.template-empty{
+  display:grid;
+  gap:4px;
+  padding:18px 12px;
+  text-align:center;
+  border:1px dashed var(--line);
+  border-radius:14px;
+  color:var(--muted);
+}
+.template-empty strong{color:var(--text);font-size:.78rem}
+.template-empty span{font-size:.65rem}
+.template-item{
+  display:grid;
+  gap:8px;
+  padding:10px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:var(--panel);
+}
+.template-item-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.template-item-top > div{display:grid;gap:2px;min-width:0}
+.template-item-top strong{font-size:.8rem;line-height:1.2}
+.template-item-top small{font-size:.59rem;color:var(--muted);line-height:1.25}
+.template-loop{
+  width:32px;
+  height:32px;
+  flex:0 0 auto;
+  display:grid;
+  place-items:center;
+  border-radius:10px;
+  background:color-mix(in srgb,var(--accent) 12%,var(--card));
+}
+.template-preview{
+  color:var(--muted);
+  font-size:.61rem;
+  line-height:1.35;
+  overflow:hidden;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+}
+.template-load-actions{display:flex;gap:7px;flex-wrap:wrap}
+.template-load-actions button{flex:1 1 150px;min-height:36px;font-size:.66rem}
+.template-manage-actions{display:flex;gap:9px;flex-wrap:wrap;padding-top:1px}
+.template-manage-actions button{
+  border:0;
+  padding:0;
+  background:transparent;
+  color:var(--muted);
+  font-size:.58rem;
+  text-decoration:underline;
+  text-underline-offset:2px;
+  cursor:pointer;
+}
+.template-manage-actions button[data-act="delete"]{color:#b91c1c}
+.template-dialog.is-busy button,
+.template-dialog.is-busy input{pointer-events:none;opacity:.68}
+body.shopping-mode .template-open-btn{display:none!important}
+
+@media(max-width:520px){
+  .template-dialog{width:96vw;max-height:92vh}
+  .template-card-shell{padding:12px;border-radius:17px;gap:10px}
+  .template-save-box{grid-template-columns:1fr}
+  .template-save-btn{width:100%}
+  .template-store-check{grid-column:auto}
+  .template-list{max-height:55vh}
+  .template-load-actions button{flex-basis:120px}
+}

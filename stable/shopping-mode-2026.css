@@ -1,0 +1,198 @@
+/* Zoé Lista – boltban használható fókuszált bevásárló mód. */
+.shopping-mode-start{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  border-color:color-mix(in srgb,var(--accent) 38%,var(--line));
+  font-weight:850;
+}
+.shopping-mode-start:disabled{opacity:.45;cursor:not-allowed}
+
+.shopping-mode-bar{
+  display:none;
+  position:sticky;
+  top:var(--shopping-sticky-top,62px);
+  z-index:4;
+  margin:0 0 10px;
+  padding:10px 11px;
+  border:1px solid color-mix(in srgb,var(--accent) 34%,var(--line));
+  border-radius:15px;
+  background:color-mix(in srgb,var(--card) 94%,var(--accent2));
+  box-shadow:0 10px 24px color-mix(in srgb,#000 12%,transparent);
+  overflow-anchor:none;
+}
+body.shopping-mode .shopping-mode-bar{display:block}
+.shopping-mode-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.shopping-mode-next{display:grid;gap:1px;min-width:0}
+.shopping-mode-eyebrow{
+  color:var(--muted);
+  font-size:.62rem;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.07em;
+}
+.shopping-mode-title{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:1rem;
+  line-height:1.15;
+}
+.shopping-mode-exit{
+  flex:0 0 auto;
+  min-height:34px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:var(--card);
+  color:var(--muted);
+  padding:0 10px;
+  font-size:.74rem;
+  font-weight:800;
+  cursor:pointer;
+}
+.shopping-mode-meta{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-top:6px;
+  color:var(--muted);
+  font-size:.68rem;
+  font-weight:750;
+}
+.shopping-mode-store{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  text-align:right;
+}
+.shopping-mode-track{
+  height:5px;
+  overflow:hidden;
+  margin-top:7px;
+  border-radius:999px;
+  background:color-mix(in srgb,var(--line) 72%,transparent);
+}
+.shopping-mode-track span{
+  display:block;
+  width:0;
+  height:100%;
+  border-radius:inherit;
+  background:var(--accent);
+  transition:width .22s ease;
+}
+.shopping-mode-bar.is-finished{
+  border-color:color-mix(in srgb,#16a34a 40%,var(--line));
+  background:color-mix(in srgb,var(--card) 92%,#dcfce7);
+}
+.shopping-mode-bar.is-finished .shopping-mode-track span{width:100%!important}
+
+/* Bevásárló módban csak a lényeg marad szem előtt. */
+body.shopping-mode .store-profile-bar,
+body.shopping-mode .toolbar,
+body.shopping-mode .quick-help,
+body.shopping-mode .smart-picks,
+body.shopping-mode .habit-suggestions,
+body.shopping-mode #inputPreview{
+  display:none!important;
+}
+body.shopping-mode .composer{
+  padding-bottom:5px;
+  background:var(--bg);
+}
+body.shopping-mode .list-root{gap:8px}
+body.shopping-mode .category-block{
+  scroll-margin-top:calc(var(--shopping-sticky-top,62px) + 92px);
+  transition:opacity .15s ease;
+}
+body.shopping-mode .shopping-current{
+  opacity:1;
+}
+body.shopping-mode .shopping-current .category-head{
+  min-height:30px;
+  color:var(--text);
+  font-size:.82rem;
+  letter-spacing:.035em;
+  border-left:4px solid var(--family-color,var(--accent));
+  padding-left:8px;
+}
+body.shopping-mode .shopping-current .item:not(.done){
+  border-color:color-mix(in srgb,var(--family-color,var(--accent)) 50%,var(--line));
+  box-shadow:0 2px 12px color-mix(in srgb,var(--family-color,var(--accent)) 10%,transparent);
+}
+body.shopping-mode .shopping-future{opacity:.76}
+body.shopping-mode .shopping-complete{opacity:.32}
+body.shopping-mode .shopping-complete .category-head::after{
+  content:'✓ kész';
+  margin-left:auto;
+  font-size:.62rem;
+  text-transform:none;
+  letter-spacing:0;
+  color:var(--muted);
+}
+
+/* Boltban a kipipálás a fő művelet. */
+body.shopping-mode .check{
+  width:36px;
+  height:36px;
+  min-width:36px;
+  cursor:pointer;
+}
+body.shopping-mode .item{
+  min-height:66px;
+  padding:5px 6px;
+  gap:5px;
+}
+body.shopping-mode .actions{
+  gap:0;
+  opacity:.28;
+}
+body.shopping-mode .mini-btn{
+  width:20px;
+  height:20px;
+  border-radius:7px;
+  font-size:.66rem;
+}
+body.shopping-mode .qty button{
+  width:20px;
+  height:20px;
+  font-size:.82rem;
+}
+body.shopping-mode .qty span{
+  min-width:23px;
+  font-size:.66rem;
+}
+body.shopping-mode .product-icon{
+  width:28px;
+  height:28px;
+  font-size:.95rem;
+}
+body.shopping-mode .item-name{font-size:.86rem}
+body.shopping-mode .pill{font-size:.52rem;padding:1px 4px}
+body.shopping-mode .price-line{font-size:.76rem}
+
+@media(max-width:520px){
+  .shopping-mode-bar{
+    margin-left:-1px;
+    margin-right:-1px;
+    padding:9px 10px;
+    border-radius:13px;
+  }
+  .shopping-mode-title{font-size:.94rem}
+  .shopping-mode-meta{font-size:.64rem}
+  .shopping-mode-store{max-width:36%}
+  .shopping-mode-exit{min-height:32px;padding:0 8px;font-size:.7rem}
+  body.shopping-mode .check{width:38px;height:38px;min-width:38px}
+  body.shopping-mode .item{grid-template-columns:auto auto minmax(0,1fr) auto;min-height:65px;padding:4px 5px}
+  body.shopping-mode .actions{opacity:.22}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .shopping-mode-track span,.shopping-mode .category-block{transition:none}
+}
