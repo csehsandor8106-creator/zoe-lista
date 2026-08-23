@@ -1,0 +1,36 @@
+/* Zoé Lista – magyar hangbevitel. */
+.voice-input-btn{
+  flex:0 0 auto;width:46px;min-height:46px;border:1px solid var(--line);border-radius:14px;
+  background:var(--card);color:var(--text);font-size:1.12rem;cursor:pointer;box-shadow:var(--shadow);
+  touch-action:manipulation;display:grid;place-items:center;padding:0
+}
+.voice-input-btn:active{transform:translateY(1px)}
+.voice-input-btn.is-listening{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--card));animation:voicePulse 1s ease-in-out infinite}
+
+.voice-dialog{width:min(94vw,520px);max-height:min(92dvh,760px);border:0;padding:0;background:transparent;color:var(--text)}
+.voice-dialog::backdrop{background:rgba(0,0,0,.68)}
+.voice-card{display:grid;gap:11px;padding:14px;border:1px solid var(--line);border-radius:20px;background:var(--card);box-shadow:0 22px 70px rgba(0,0,0,.35)}
+.voice-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.voice-head h2{margin:0;font-size:1.08rem}.voice-head p{margin:3px 0 0;color:var(--muted);font-size:.75rem}
+.voice-listen-btn{display:flex;align-items:center;justify-content:center;gap:12px;min-height:74px;border:1px solid var(--line);border-radius:18px;background:var(--panel);color:var(--text);font-weight:850;cursor:pointer}
+.voice-orb{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 15%,var(--card));border:1px solid color-mix(in srgb,var(--accent) 32%,var(--line));font-size:1.4rem}
+.voice-dialog.is-listening .voice-orb{background:var(--accent);animation:voicePulse 1s ease-in-out infinite}
+.voice-status{min-height:34px;display:flex;align-items:center;padding:7px 10px;border-radius:11px;background:var(--panel);color:var(--muted);font-size:.75rem;font-weight:750;line-height:1.35}
+.voice-status[data-state="listening"]{color:var(--text);background:color-mix(in srgb,var(--accent) 11%,var(--panel))}.voice-status[data-state="success"]{color:var(--text);background:var(--accent2)}.voice-status[data-state="warn"]{background:#fff2e9;color:#8a3d11}:root[data-theme="dark"] .voice-status[data-state="warn"]{background:#433023;color:#ffd6bd}
+.voice-transcript-label{display:grid;gap:5px;color:var(--muted);font-size:.75rem;font-weight:750}.voice-transcript{width:100%;min-height:76px;resize:vertical;border:1px solid var(--line);border-radius:13px;background:var(--panel);color:var(--text);padding:10px 11px;font:inherit;font-size:16px;outline:none}.voice-transcript:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 14%,transparent)}
+.voice-preview{display:grid;gap:8px;border:1px solid var(--line);border-radius:14px;padding:10px;background:color-mix(in srgb,var(--panel) 70%,transparent)}.voice-preview[hidden]{display:none!important}.voice-preview-head{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:.77rem}.voice-count{color:var(--accent);font-weight:900}.voice-preview small{color:var(--muted);font-size:.66rem}
+.voice-items{display:grid;gap:6px;max-height:210px;overflow:auto}.voice-item-row{display:grid;grid-template-columns:minmax(0,1fr) 34px;gap:6px}.voice-item-input{min-width:0;min-height:38px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--text);padding:7px 9px;font-size:15px;outline:none}.voice-item-input:focus{border-color:var(--accent)}.voice-remove{border:1px solid var(--line);border-radius:10px;background:transparent;color:var(--muted);font-size:1.25rem;cursor:pointer}
+.voice-actions{display:grid;grid-template-columns:1fr 1.35fr;gap:8px}.voice-actions .add-btn:disabled{opacity:.45;cursor:not-allowed}
+.voice-toast{position:fixed;left:50%;bottom:92px;transform:translate(-50%,16px);opacity:0;z-index:100;background:var(--text);color:var(--bg);border-radius:999px;padding:10px 15px;font-weight:850;font-size:.85rem;transition:.2s ease;pointer-events:none;white-space:nowrap}.voice-toast.show{opacity:1;transform:translate(-50%,0)}
+body.ui-compact .voice-input-btn{width:42px;min-height:40px;border-radius:12px;box-shadow:none}
+
+@keyframes voicePulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 32%,transparent)}50%{box-shadow:0 0 0 8px color-mix(in srgb,var(--accent) 0%,transparent)}}
+@media(max-width:520px){
+  /* input + vonalkód + mikrofon + hozzáadás */
+  .composer form{grid-template-columns:minmax(0,1fr) auto auto auto}
+  .voice-input-btn{width:42px}
+  .voice-card{padding:11px;border-radius:17px;gap:9px}
+  .voice-listen-btn{min-height:66px}.voice-orb{width:44px;height:44px}
+  .voice-actions{grid-template-columns:1fr 1.45fr}.voice-actions>*{padding-left:8px;padding-right:8px;font-size:.82rem}
+}
+@media(max-width:390px){.barcode-scan-btn,.voice-input-btn{width:38px}.composer form{gap:6px}.composer .add-btn{padding-left:9px;padding-right:9px}}
+@media(prefers-reduced-motion:reduce){.voice-input-btn.is-listening,.voice-dialog.is-listening .voice-orb{animation:none}.voice-toast{transition:none}}
