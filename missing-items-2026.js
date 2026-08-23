@@ -229,6 +229,7 @@
     clearTimeout(renderTimer);
     if (input.value.trim()) {
       section.hidden = true;
+      habitsSection?.classList.remove('missing-check-superseded');
       return;
     }
 
@@ -274,6 +275,7 @@
       list.appendChild(card);
     }
 
+    habitsSection?.classList.toggle('missing-check-superseded',picks.length > 0);
     section.hidden = picks.length === 0;
   }
 
