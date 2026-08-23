@@ -178,9 +178,9 @@
       if (!due && !coBought) continue;
 
       let reason = '';
-      if (due && coBought) reason = `${entry.name} gyakran ilyenkor, és ezekkel a tételekkel együtt került a kosaradba.`;
-      else if (due) reason = `${entry.name} gyakran szoktál ilyenkor venni.`;
-      else reason = `${entry.name} a mostani tételekkel gyakran együtt került a kosaradba.`;
+      if (due && coBought) reason = `Ilyenkor és a mostani tételekkel együtt is gyakran vetted: ${entry.name}.`;
+      else if (due) reason = `Ilyenkor gyakran szoktad venni: ${entry.name}.`;
+      else reason = `A mostani tételekkel gyakran együtt vetted: ${entry.name}.`;
 
       const meta = [];
       if (cycle?.days) meta.push(cycleLabel(cycle.days));
