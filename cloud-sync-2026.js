@@ -25,7 +25,7 @@
   const uuid=()=>crypto.randomUUID?.()||`${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}-${Math.random().toString(16).slice(2)}`;
   const now=()=>Date.now();
   const enc=new TextEncoder();
-  let applying=false,busy=false,syncTimer=0,scanTimer=0,pendingReload=false;
+  let applying=false,busy=false,syncTimer=0,pendingReload=false;
 
   function deviceId(){let id=localStorage.getItem(DEVICE_KEY);if(!id){id=uuid();localStorage.setItem(DEVICE_KEY,id)}return id}
   function config(){return load(CONFIG_KEY,{enabled:false,groupId:'',secret:'',revision:0,lastSync:0})}
@@ -75,7 +75,7 @@
     let changed=false;
     for(const key of SYNC_KEYS){
       const value=raw(key),h=await digest(value??'∅'),prev=m.keys[key];
-      if(!prev){m.keys[key]={hash:h,clock:{at:now(),seq:0,device:m.deviceId}};continue}
+      if(!prev){m.keys[key]={hash:h,clock:{at:value==null?0:now(),seq:0,device:m.deviceId}};continue}
       if(prev.hash!==h&&!applying){m.keys[key]={hash:h,clock:tick(m)};changed=true}
       else prev.hash=h;
     }
@@ -226,7 +226,7 @@
   async function syncOnce(){
     const c=config();if(busy||!c.enabled||!c.groupId||!navigator.onLine)return false;busy=true;render();
     try{
-      await scanLocal();let pull=await api({action:'pull',groupId:c.groupId,secret:c.secret});let changed=await mergeRemote(pull.payload);await scanLocal();
+      await scanLocal();const pull=await api({action:'pull',groupId:c.groupId,secret:c.secret});let changed=await mergeRemote(pull.payload);await scanLocal();
       const localPayload=buildPayload();const remoteHash=await digest(stable(pull.payload||{})),localHash=await digest(stable(localPayload));
       if(remoteHash!==localHash){
         try{await pushMerged(pull.revision||0)}catch(e){
