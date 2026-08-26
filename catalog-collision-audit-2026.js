@@ -191,6 +191,60 @@
     return lines.join('\n');
   }
 
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  }
+
+  function renderDebugPanel(result) {
+    const params = new URLSearchParams(location.search);
+    if (params.get('debug') !== '1') return;
+
+    document.getElementById('zoeAliasAuditPanel')?.remove();
+
+    const panel = document.createElement('section');
+    panel.id = 'zoeAliasAuditPanel';
+    panel.setAttribute('aria-label','Zoé alias audit');
+    panel.style.cssText = [
+      'position:relative','z-index:9999','margin:10px','padding:10px','border:1px solid #64748b',
+      'border-radius:12px','background:#111827','color:#f8fafc','font:12px/1.4 system-ui,sans-serif',
+      'box-shadow:0 8px 24px rgba(0,0,0,.28)','overflow-wrap:anywhere'
+    ].join(';');
+
+    const rows = result.collisions.map(item => `
+      <details style="margin-top:7px;padding:7px;border:1px solid #334155;border-radius:8px;background:#0f172a">
+        <summary style="cursor:pointer;font-weight:800">${escapeHtml(item.severityHu.toUpperCase())} · ${escapeHtml(item.alias)}</summary>
+        <div style="margin-top:6px"><b>${escapeHtml(item.previous.rule.label || '—')}</b> <small>(${escapeHtml(item.previous.source)})</small></div>
+        <div>↓</div>
+        <div><b>${escapeHtml(item.next.rule.label || '—')}</b> <small>(${escapeHtml(item.next.source)})</small></div>
+        <div style="margin-top:5px;color:#cbd5e1">${escapeHtml(item.reasons.join(' · '))}</div>
+      </details>`).join('');
+
+    panel.innerHTML = `
+      <div style="display:flex;gap:8px;align-items:flex-start;justify-content:space-between">
+        <div><b style="font-size:14px">🔎 Zoé Alias Audit</b><div style="color:#cbd5e1;margin-top:2px">${result.collisionCount} ütközés · ${result.requiresActionCount} javítandó</div></div>
+        <button type="button" data-audit-close style="border:0;border-radius:8px;padding:5px 8px;background:#334155;color:#fff">✕</button>
+      </div>
+      <div style="margin-top:7px">🔴 ${result.summary.critical} kritikus · 🟠 ${result.summary.high} magas · 🟡 ${result.summary.medium} közepes · ⚪ ${result.summary.low} alacsony</div>
+      ${result.collisionCount ? rows : '<div style="margin-top:8px;color:#86efac"><b>Nem találtam aliasütközést.</b></div>'}
+      <button type="button" data-audit-copy style="margin-top:9px;border:0;border-radius:8px;padding:7px 9px;background:#0f766e;color:#fff;font-weight:800">Jelentés másolása</button>
+      <span data-audit-status style="margin-left:7px;color:#94a3b8"></span>`;
+
+    panel.querySelector('[data-audit-close]')?.addEventListener('click',()=>panel.remove());
+    panel.querySelector('[data-audit-copy]')?.addEventListener('click',async()=>{
+      const status = panel.querySelector('[data-audit-status]');
+      try {
+        await navigator.clipboard.writeText(textReport(result));
+        if (status) status.textContent = 'Másolva ✓';
+      } catch {
+        if (status) status.textContent = 'Másolás nem sikerült';
+      }
+    });
+
+    const shell = document.querySelector('.app-shell');
+    if (shell?.parentNode) shell.parentNode.insertBefore(panel,shell);
+    else document.body.prepend(panel);
+  }
+
   function report({log=true} = {}) {
     const enriched = collisions
       .map(enrichCollision)
@@ -240,16 +294,19 @@
     if (!active) return report({log:false});
     active = false;
     if (storageProto.setItem === wrappedSetItem) storageProto.setItem = nativeSetItem;
-    return report({log:true});
+    const result = report({log:true});
+    renderDebugPanel(result);
+    return result;
   }
 
   const wrappedSetItem = storageProto.setItem;
 
   window.ZoeCatalogCollisionAudit2026 = {
-    version:2026082602,
+    version:2026082603,
     report,
     finalize,
     textReport,
+    renderDebugPanel,
     lastResult:null,
     get collisions() { return collisions.map(item => ({...item})); }
   };
