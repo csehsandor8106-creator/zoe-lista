@@ -1,11 +1,10 @@
 (() => {
   'use strict';
 
-  // Zoé Lista – stabil kompakt gyorsbevitel.
-  // Fontos: a kompakt módot NEM a scrollY kapcsolja, mert a sticky composer
-  // saját magasságváltozása visszahat a scrollY-ra és görgetési pingpongot okozhat.
-  // Ehelyett a composer ELŐTT lévő topbar helyzete dönt, amelyet a composer
-  // összecsukása nem tud elmozdítani.
+  // Zoé Lista – stabil, finoman animált kompakt gyorsbevitel.
+  // A kompakt módot NEM a scrollY kapcsolja, mert a sticky composer
+  // saját magasságváltozása visszahatna a scrollY-ra és görgetési pingpongot okozhat.
+  // Ehelyett a composer ELŐTT lévő topbar helyzete dönt.
   const body = document.body;
   const topbar = document.querySelector('.topbar');
   const input = document.getElementById('itemInput');
@@ -15,6 +14,11 @@
   const normalPlaceholder = input.getAttribute('placeholder') || 'Termék hozzáadása';
   const normalButtonText = addButton.textContent || 'Hozzáadás';
   const compactPlaceholder = 'Termék hozzáadása…';
+
+  // Kis hiszterézis: lefelé hamarabb csukunk, felfelé csak akkor nyitunk,
+  // amikor a topbar már egyértelműen visszatért. Így nincs határérték-remegés.
+  const COMPACT_ENTER_AT = 8;
+  const COMPACT_EXIT_AT = 28;
 
   let compact = false;
   let frame = 0;
@@ -40,8 +44,11 @@
   function update() {
     frame = 0;
 
-    // Gépelés közben maradjon nyitva a teljes beviteli sáv.
-    if (document.activeElement === input) {
+    // Ha a felhasználó TÉNYLEG gépel, maradjon nyitva a teljes beviteli sáv.
+    // Mobilon az üres input görgetés közben is gyakran fókuszban marad;
+    // önmagában a fókusz ezért többé nem akadályozza a kompakt módot.
+    const typing = document.activeElement === input && input.value.trim().length > 0;
+    if (typing) {
       apply(false);
       return;
     }
@@ -49,7 +56,8 @@
     // Stabil referencia: a topbar a composer előtt van, így a composer
     // zsugorodása/nyílása ezt a mérést nem tudja visszabillenteni.
     const topbarBottom = topbar.getBoundingClientRect().bottom;
-    apply(topbarBottom <= 8);
+    if (compact) apply(topbarBottom <= COMPACT_EXIT_AT);
+    else apply(topbarBottom <= COMPACT_ENTER_AT);
   }
 
   function schedule() {
@@ -62,6 +70,7 @@
   window.addEventListener('orientationchange', schedule, {passive:true});
   input.addEventListener('focus', schedule);
   input.addEventListener('blur', schedule);
+  input.addEventListener('input', schedule);
 
   update();
 })();
