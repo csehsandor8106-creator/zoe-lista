@@ -119,18 +119,41 @@
 /* A sticky beviteli sáv magasságváltozását ne használja a böngésző scroll-anchornak. */
 .composer,
 .quick-help,
-.smart-picks{
+.smart-picks,
+.habit-suggestions,
+.missing-items-check{
   overflow-anchor:none;
 }
 
-/* Stabil kompakt gyorsbevitel. */
+/* Stabil, olajozott kompakt gyorsbevitel. */
 .composer{
-  transition:background-color .12s ease,box-shadow .12s ease;
+  transition:
+    padding .32s cubic-bezier(.2,.75,.2,1),
+    background-color .22s ease,
+    box-shadow .22s ease;
+}
+.composer form{
+  transition:gap .32s cubic-bezier(.2,.75,.2,1);
+}
+.composer input,
+.composer .add-btn{
+  transition:
+    min-height .32s cubic-bezier(.2,.75,.2,1),
+    padding .32s cubic-bezier(.2,.75,.2,1),
+    border-radius .32s cubic-bezier(.2,.75,.2,1),
+    font-size .22s ease;
 }
 .quick-help{
   overflow:hidden;
   max-height:32px;
   opacity:1;
+  transform:translateY(0);
+  margin-top:0;
+  transition:
+    max-height .30s cubic-bezier(.2,.75,.2,1),
+    opacity .18s ease,
+    transform .30s cubic-bezier(.2,.75,.2,1),
+    margin .30s cubic-bezier(.2,.75,.2,1);
 }
 
 body.ui-compact .composer{
@@ -152,7 +175,62 @@ body.ui-compact .composer .add-btn{
   border-radius:12px;
 }
 body.ui-compact .quick-help{
-  display:none;
+  max-height:0;
+  opacity:0;
+  transform:translateY(-5px);
+  margin-top:-2px;
+  pointer-events:none;
+}
+
+/*
+ * A felső intelligens javaslatsávok korábban display:none-nal ugrottak el.
+ * Itt magasabb specificitással életben tartjuk őket az animáció idejére,
+ * majd magasság/áttetszőség/margó együtt csukódik össze.
+ * A valóban [hidden], superseded vagy shopping-mode állapotokat nem írjuk felül.
+ */
+.smart-picks:not([hidden]),
+.habit-suggestions:not([hidden]):not(.missing-check-superseded),
+.missing-items-check:not([hidden]){
+  overflow:hidden;
+  opacity:1;
+  transform:translateY(0) scale(1);
+  visibility:visible;
+  transition:
+    max-height .34s cubic-bezier(.2,.75,.2,1),
+    opacity .20s ease,
+    transform .34s cubic-bezier(.2,.75,.2,1),
+    margin .34s cubic-bezier(.2,.75,.2,1),
+    padding .34s cubic-bezier(.2,.75,.2,1),
+    border-width .26s ease,
+    visibility 0s linear 0s;
+}
+.smart-picks:not([hidden]){max-height:120px}
+.habit-suggestions:not([hidden]):not(.missing-check-superseded){max-height:140px}
+.missing-items-check:not([hidden]){max-height:360px}
+
+html body.ui-compact .smart-picks:not([hidden]),
+html body.ui-compact .habit-suggestions:not([hidden]):not(.missing-check-superseded),
+html body.ui-compact:not(.shopping-mode) .missing-items-check:not([hidden]){
+  display:grid!important;
+  max-height:0;
+  opacity:0;
+  transform:translateY(-8px) scale(.985);
+  margin-top:0;
+  margin-bottom:0;
+  padding-top:0;
+  padding-bottom:0;
+  border-top-width:0;
+  border-bottom-width:0;
+  pointer-events:none;
+  visibility:hidden;
+  transition:
+    max-height .34s cubic-bezier(.2,.75,.2,1),
+    opacity .20s ease,
+    transform .34s cubic-bezier(.2,.75,.2,1),
+    margin .34s cubic-bezier(.2,.75,.2,1),
+    padding .34s cubic-bezier(.2,.75,.2,1),
+    border-width .26s ease,
+    visibility 0s linear .34s;
 }
 
 /* A fix összesítő is maradjon visszafogott. */
@@ -179,5 +257,15 @@ body.ui-compact .quick-help{
 }
 
 @media(prefers-reduced-motion:reduce){
-  .composer,.actions{transition:none}
+  .composer,
+  .composer form,
+  .composer input,
+  .composer .add-btn,
+  .quick-help,
+  .smart-picks,
+  .habit-suggestions,
+  .missing-items-check,
+  .actions{
+    transition:none!important;
+  }
 }
