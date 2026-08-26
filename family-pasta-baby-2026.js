@@ -35,7 +35,7 @@
     {aliases:['eperlevél','eperlevel','eper levél','eper level'],label:'Eperlevél tészta',category:'Alapélelmiszer',icon:'🍜',price:549,unit:'csomag',legacyDbToDefault:true},
     {aliases:['csigatészta','csigateszta','csiga tészta','csiga teszta'],label:'Csigatészta',category:'Alapélelmiszer',icon:'🍜',price:599,unit:'csomag',legacyDbToDefault:true},
     {aliases:['lúdgége','ludgege','lúd gége','lud gege'],label:'Lúdgége tészta',category:'Alapélelmiszer',icon:'🍜',price:599,unit:'csomag',legacyDbToDefault:true},
-    {aliases:['betűtészta','betuteszta','betű tészta','betu teszta','levesbetű','levesbetu'],label:'Betűtészta',category:'Alapélelmiszer',icon:'🔤',price:549,unit:'csomag',legacyDbToDefault:true},
+    {aliases:['betűtészta','betuteszta','betű tészta','betu teszta'],label:'Betűtészta',category:'Alapélelmiszer',icon:'🔤',price:549,unit:'csomag',legacyDbToDefault:true},
     {aliases:['csillagtészta','csillagteszta','csillag tészta','csillag teszta'],label:'Csillagtészta',category:'Alapélelmiszer',icon:'⭐',price:549,unit:'csomag',legacyDbToDefault:true},
     {aliases:['kiskocka','kis kocka','kis kockatészta','kis kockateszta'],label:'Kiskocka tészta',category:'Alapélelmiszer',icon:'🍜',price:549,unit:'csomag',legacyDbToDefault:true},
     {aliases:['grízgaluska','grizgaluska','daragaluska','dara galuska'],label:'Grízgaluska / daragaluska alap',category:'Alapélelmiszer',icon:'🥣',price:699,unit:'csomag',legacyDbToDefault:true},
