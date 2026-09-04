@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  // Zoé Lista – sajtok, torták/cukrászsütemények és drazsék/cukorkák családbővítés.
+  // Zoé Lista – sajtok, cukrászsütemények és drazsék/cukorkák családbővítés.
   // A felhasználó saját tanítása és saját ára mindig elsőbbséget élvez.
   const LEARNED_KEY = 'zoe-lista-learned-v1';
   const STATE_KEY = 'zoe-lista-state-v1';
@@ -48,18 +48,9 @@
     {aliases:['kecskesajt','kecske sajt'],label:'Kecskesajt',category:'Tejtermék és tojás',icon:'🧀',price:1499,unit:'csomag',legacyDbToDefault:true},
     {aliases:['juhsajt','juh sajt'],label:'Juhsajt',category:'Tejtermék és tojás',icon:'🧀',price:1599,unit:'csomag',legacyDbToDefault:true},
 
-    // TORTÁK – egész torta alapból db; szelet külön db-ár
-    {aliases:['torta','egész torta','egesz torta'],label:'Torta',category:'Pékáru',icon:'🎂',price:4999,unit:'db'},
+    // NEM ÁTFEDŐ TORTÁS TÉTELEK – a teljes tortacsalád gazdája a frissebb family-shopping-gaps-2026.js
     {aliases:['tortaszelet','torta szelet','szelet torta'],label:'Tortaszelet',category:'Pékáru',icon:'🍰',price:899,unit:'db'},
-    {aliases:['csokitorta','csokoládétorta','csokoladetorta','csoki torta'],label:'Csokoládétorta',category:'Pékáru',icon:'🎂',price:5499,unit:'db'},
-    {aliases:['gyümölcstorta','gyumolcstorta','gyümölcs torta','gyumolcs torta'],label:'Gyümölcstorta',category:'Pékáru',icon:'🎂',price:5499,unit:'db'},
-    {aliases:['sajttorta','sajt torta','cheesecake'],label:'Sajttorta',category:'Pékáru',icon:'🍰',price:5499,unit:'db'},
-    {aliases:['dobostorta','dobos torta'],label:'Dobostorta',category:'Pékáru',icon:'🎂',price:5999,unit:'db'},
-    {aliases:['eszterházy torta','eszterhazy torta','eszterházy','eszterhazy'],label:'Eszterházy torta',category:'Pékáru',icon:'🎂',price:6499,unit:'db'},
-    {aliases:['sacher torta','sachertorta','sacher'],label:'Sacher torta',category:'Pékáru',icon:'🎂',price:5999,unit:'db'},
-    {aliases:['oroszkrémtorta','oroszkremtorta','oroszkrém torta','oroszkrem torta'],label:'Oroszkrémtorta',category:'Pékáru',icon:'🎂',price:5999,unit:'db'},
     {aliases:['mousse torta','moussetorta'],label:'Mousse torta',category:'Pékáru',icon:'🎂',price:6499,unit:'db'},
-    {aliases:['fagylalttorta','fagyi torta','jégkrémtorta','jegkremtorta'],label:'Fagylalttorta',category:'Fagyasztott',icon:'🍨',price:5499,unit:'db'},
 
     // CUKRÁSZSÜTEMÉNYEK / DESSZERTEK
     {aliases:['krémes','kremes'],label:'Krémes',category:'Pékáru',icon:'🍰',price:699,unit:'db'},

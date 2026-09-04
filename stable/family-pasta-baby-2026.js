@@ -15,7 +15,7 @@
     {aliases:['fusilli','orsótészta','orsoteszta','csavart tészta','csavart teszta'],label:'Fusilli / orsótészta',category:'Alapélelmiszer',icon:'🍝',price:649,unit:'csomag',legacyDbToDefault:true},
     {aliases:['farfalle','masnitészta','masniteszta','pillangótészta','pillangoteszta'],label:'Farfalle / masnitészta',category:'Alapélelmiszer',icon:'🍝',price:699,unit:'csomag',legacyDbToDefault:true},
     {aliases:['tagliatelle','metélt','metelt','szélesmetélt','szelesmetelt'],label:'Tagliatelle / szélesmetélt',category:'Alapélelmiszer',icon:'🍝',price:799,unit:'csomag',legacyDbToDefault:true},
-    {aliases:['lasagne','lasagna','lasagne tészta','lasagne teszta'],label:'Lasagne tészta',category:'Alapélelmiszer',icon:'🍝',price:999,unit:'csomag',legacyDbToDefault:true},
+    {aliases:['lasagne tészta','lasagne teszta','lasagna tészta','lasagna teszta','lasagne lap','lasagne lapok','lasagna lap','lasagna lapok'],label:'Lasagne tészta',category:'Alapélelmiszer',icon:'🍝',price:999,unit:'csomag',legacyDbToDefault:true},
     {aliases:['cannelloni','kanelloni'],label:'Cannelloni',category:'Alapélelmiszer',icon:'🍝',price:1099,unit:'csomag',legacyDbToDefault:true},
     {aliases:['szarvacska','szarvacskatészta','szarvacska tészta','szarvacska teszta'],label:'Szarvacska',category:'Alapélelmiszer',icon:'🍝',price:599,unit:'csomag',legacyDbToDefault:true},
     {aliases:['kagylótészta','kagyloteszta','kagyló tészta','kagylo teszta'],label:'Kagylótészta',category:'Alapélelmiszer',icon:'🍝',price:649,unit:'csomag',legacyDbToDefault:true},

@@ -18,26 +18,51 @@
     catch { return fallback; }
   }
 
+  function builtinVersion(rule) {
+    const value = Number(rule?.builtinVersion);
+    return Number.isFinite(value) ? value : 0;
+  }
+
   let learned = load(LEARNED_KEY, {});
   let changed = false;
 
   // 1) A katalógus kanonikus megjelenített neveit is tanuljuk meg pontos kulcsként.
-  const builtinRules = Object.values(learned).filter(rule =>
-    rule && rule.builtinCatalog && typeof rule.label === 'string' && rule.label.trim()
-  );
+  // Fontos: ugyanarra a kanonikus névre több régi family fájl is adhat szabályt.
+  // Ilyenkor a legújabb builtinVersion nyer. Azonos verziónál az a szabály kap
+  // elsőbbséget, amelyik eleve a kanonikus exact kulcson található. Így egy régi
+  // alias nem tud később visszaírni egy frissebb családszabályt.
+  const canonicalWinners = new Map();
 
-  for (const rule of builtinRules) {
+  for (const [alias, rule] of Object.entries(learned)) {
+    if (!rule?.builtinCatalog || typeof rule.label !== 'string' || !rule.label.trim()) continue;
+
     const canonicalKey = normalize(rule.label);
     if (!canonicalKey) continue;
 
+    const candidate = {
+      alias,
+      rule,
+      version:builtinVersion(rule),
+      exactCanonical:alias === canonicalKey
+    };
+    const current = canonicalWinners.get(canonicalKey);
+
+    if (!current ||
+        candidate.version > current.version ||
+        (candidate.version === current.version && candidate.exactCanonical && !current.exactCanonical)) {
+      canonicalWinners.set(canonicalKey, candidate);
+    }
+  }
+
+  for (const [canonicalKey, winner] of canonicalWinners) {
     const existing = learned[canonicalKey];
     // A felhasználó saját tanítását soha nem írjuk felül.
     if (existing && !existing.builtinCatalog) continue;
 
     const stableRule = {
-      ...rule,
-      kind: rule.kind || 'learned',
-      canonicalCatalogKey: true
+      ...winner.rule,
+      kind:winner.rule.kind || 'learned',
+      canonicalCatalogKey:true
     };
 
     if (!existing || JSON.stringify(existing) !== JSON.stringify(stableRule)) {
@@ -84,9 +109,9 @@
 
     learned[key] = {
       ...match.rule,
-      kind: match.rule.kind || 'learned',
-      derivedCatalogAlias: true,
-      derivedFromAlias: match.alias
+      kind:match.rule.kind || 'learned',
+      derivedCatalogAlias:true,
+      derivedFromAlias:match.alias
     };
     changed = true;
   }

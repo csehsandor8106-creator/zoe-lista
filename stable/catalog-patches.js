@@ -118,7 +118,7 @@
     },
     {
       aliases:['savanyúkáposzta','savanyukaposzta','savanyú káposzta','savanyu kaposzta','savanyított káposzta','savanyitott kaposzta'],
-      label:'Savanyúkáposzta',
+      label:'Savanyú káposzta',
       category:'Zöldség-gyümölcs',
       icon:'🥬',
       price:699,
